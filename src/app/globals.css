@@ -838,6 +838,42 @@ body {
   -ms-overflow-style: none;
 }
 
+/* ── Custom thin dark scrollbar on left sidebar for desktop & mobile ── */
+.sidebar-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.45) transparent;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 99px;
+  transition: background 0.2s ease;
+}
+
+.sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dark .sidebar-scroll-container {
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+.dark .sidebar-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.dark .sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
 /* Project Details View Back Button */
 .pdv-back-btn {
   width: 300px;

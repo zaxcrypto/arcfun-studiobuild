@@ -2250,7 +2250,7 @@ function Sidebar({
       )}
 
       {/* Results / List */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div className="sidebar-scroll-container" style={{ flex: 1, overflowY: "auto" }}>
         {searchResults ? (
           <div style={{ padding: 12 }}>
             <p style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, paddingLeft: 6 }}>

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAccount, useSwitchChain, useDisconnect } from "wagmi";
-import { X, Check, Loader2, LogOut, AlertTriangle, Globe } from "lucide-react";
+import { useAccount, useSwitchChain } from "wagmi";
+import { X, Check, Loader2, AlertTriangle } from "lucide-react";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 
 interface NetworkSelectorModalProps {
@@ -55,9 +55,8 @@ export function NetworkSelectorModal({
   const [switchingChainId, setSwitchingChainId] = useState<number | null>(null);
   const [coords, setCoords] = useState<{ top: number; right: number } | null>(null);
 
-  const { chainId: currentChainId, isConnected } = useAccount();
+  const { chainId: currentChainId } = useAccount();
   const { chains, switchChainAsync } = useSwitchChain();
-  const { disconnect } = useDisconnect();
   const { mode } = useEnvironment();
 
   useEffect(() => {
@@ -117,11 +116,6 @@ export function NetworkSelectorModal({
     }
   };
 
-  const handleDisconnect = () => {
-    disconnect();
-    onClose();
-  };
-
   if (!mounted) return null;
 
   // Filter chains based on current app environment mode (Mainnet vs Testnet)
@@ -159,20 +153,44 @@ export function NetworkSelectorModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+          {/* Scoped CSS for Sleek Custom Thin Dark Scrollbar */}
+          <style>{`
+            .network-chain-scroll {
+              scrollbar-width: thin;
+              scrollbar-color: rgba(0, 0, 0, 0.45) transparent;
+            }
+            .network-chain-scroll::-webkit-scrollbar {
+              width: 4px;
+            }
+            .network-chain-scroll::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            .network-chain-scroll::-webkit-scrollbar-thumb {
+              background: rgba(0, 0, 0, 0.45);
+              border-radius: 99px;
+            }
+            .network-chain-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgba(0, 0, 0, 0.7);
+            }
+            .dark .network-chain-scroll {
+              scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+            }
+            .dark .network-chain-scroll::-webkit-scrollbar-thumb {
+              background: rgba(255, 255, 255, 0.28);
+            }
+            .dark .network-chain-scroll::-webkit-scrollbar-thumb:hover {
+              background: rgba(255, 255, 255, 0.45);
+            }
+          `}</style>
+
+          {/* Clean Transparent Click-Away Overlay (No Background Blur, No Greying) */}
+          <div
             onClick={onClose}
             style={{
               position: "fixed",
               inset: 0,
               zIndex: 99990,
-              background: "rgba(0, 0, 0, 0.45)",
-              backdropFilter: "blur(4px)",
-              WebkitBackdropFilter: "blur(4px)",
+              background: "transparent",
             }}
           />
 
@@ -223,7 +241,7 @@ export function NetworkSelectorModal({
                 padding: "14px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 10,
+                gap: 8,
                 overflow: "hidden",
               }}
             >
@@ -233,7 +251,7 @@ export function NetworkSelectorModal({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  paddingBottom: 4,
+                  paddingBottom: 2,
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -290,32 +308,17 @@ export function NetworkSelectorModal({
                 </button>
               </div>
 
-              {/* Subtitle */}
-              <p
-                style={{
-                  fontSize: 12,
-                  color: isUnsupported ? "#ef4444" : "var(--text-secondary)",
-                  margin: 0,
-                  lineHeight: 1.35,
-                }}
-              >
-                {isUnsupported
-                  ? "Wrong network detected. Switch or disconnect to continue."
-                  : `Select a supported ${isMainnetMode ? "Mainnet" : "Testnet"} chain.`}
-              </p>
-
-              {/* Chain List Container */}
+              {/* Chain List Container with Custom Thin Dark Scrollbar */}
               <div
+                className="network-chain-scroll"
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   gap: 3,
-                  maxHeight: 280,
+                  maxHeight: 300,
                   overflowY: "auto",
-                  paddingRight: 3,
-                  marginRight: -3,
-                  scrollbarWidth: "thin",
-                  scrollbarColor: "var(--border) transparent",
+                  paddingRight: 4,
+                  marginRight: -2,
                 }}
               >
                 {displayedChains.map((chain) => {
@@ -438,43 +441,6 @@ export function NetworkSelectorModal({
                   );
                 })}
               </div>
-
-              {/* Divider */}
-              <div
-                style={{
-                  height: 1,
-                  background: "var(--border)",
-                  margin: "2px 0",
-                  opacity: 0.6,
-                }}
-              />
-
-              {/* Disconnect Action */}
-              {isConnected && (
-                <button
-                  type="button"
-                  onClick={handleDisconnect}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    padding: "8px 10px",
-                    borderRadius: 12,
-                    border: "none",
-                    background: "transparent",
-                    color: "#ef4444",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                  className="hover:bg-red-500/10 active:scale-[0.99]"
-                >
-                  <LogOut size={15} />
-                  <span>Disconnect</span>
-                </button>
-              )}
             </motion.div>
           </div>
         </>

@@ -257,7 +257,7 @@ export default function DocsPage() {
 
         {/* ── LEFT SIDEBAR (Circle Docs Style) ── */}
         <aside
-          className={`fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-[#070709] border-r border-neutral-200 dark:border-neutral-800/80 pt-28 pb-10 px-4 md:pt-6 md:pb-12 md:sticky md:top-[109px] md:h-[calc(100vh-109px)] overflow-y-auto hide-scrollbar flex flex-col gap-6 transition-transform duration-200 ${isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+          className={`fixed inset-y-0 left-0 z-30 w-72 bg-white dark:bg-[#070709] border-r border-neutral-200 dark:border-neutral-800/80 pt-28 pb-10 px-4 md:pt-6 md:pb-12 md:sticky md:top-[109px] md:h-[calc(100vh-109px)] overflow-y-auto sidebar-scroll-container flex flex-col gap-6 transition-transform duration-200 ${isMobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
             }`}
         >
           {DOC_CATEGORIES.map(cat => {
