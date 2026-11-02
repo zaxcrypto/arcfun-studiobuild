@@ -91,6 +91,7 @@ export class CircleBridgeKitService {
         addressContext: "user-controlled"
       },
       getPublicClient: ({ chain }: any) => {
+        if (!chain) return undefined as any;
         if (chain.id === 5042 || chain.chain === "Arc" || chain.name === "Arc") {
           const arcRpc = process.env.NEXT_PUBLIC_ARC_MAINNET_RPC_URL || process.env.ARC_MAINNET_RPC_URL || "https://arc-mainnet.g.alchemy.com/v2/Vt9_fvDipTI7hEZdMc950";
           const proxyRpc = typeof window !== "undefined" ? `${window.location.origin}/api/rpc/arc` : "/api/rpc/arc";
@@ -104,7 +105,14 @@ export class CircleBridgeKitService {
             ])
           }) as any;
         }
-        return undefined as any;
+
+        // Return a valid public client for Base and all other EVM chains
+        const defaultRpc = chain.rpcUrls?.default?.http?.[0];
+        const transport = defaultRpc ? http(defaultRpc, { retryCount: 3, retryDelay: 1000 }) : http();
+        return createPublicClient({
+          chain,
+          transport
+        }) as any;
       }
     });
   }
