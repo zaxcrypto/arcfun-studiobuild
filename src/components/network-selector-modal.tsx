@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAccount, useSwitchChain } from "wagmi";
-import { X, Check, Loader2, AlertTriangle } from "lucide-react";
+import { X, Loader2, AlertTriangle } from "lucide-react";
 import { useEnvironment } from "@/contexts/EnvironmentContext";
 
 interface NetworkSelectorModalProps {
@@ -153,33 +153,38 @@ export function NetworkSelectorModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Scoped CSS for Sleek Custom Thin Dark Scrollbar */}
+          {/* Scoped CSS for Sleek Custom Thin Black Scrollbar */}
           <style>{`
             .network-chain-scroll {
               scrollbar-width: thin;
-              scrollbar-color: rgba(0, 0, 0, 0.45) transparent;
+              scrollbar-color: #000000 transparent;
             }
             .network-chain-scroll::-webkit-scrollbar {
-              width: 4px;
+              width: 3.5px;
             }
             .network-chain-scroll::-webkit-scrollbar-track {
               background: transparent;
             }
+            .network-chain-scroll::-webkit-scrollbar-button {
+              display: none !important;
+              width: 0 !important;
+              height: 0 !important;
+            }
             .network-chain-scroll::-webkit-scrollbar-thumb {
-              background: rgba(0, 0, 0, 0.45);
+              background: #000000;
               border-radius: 99px;
             }
             .network-chain-scroll::-webkit-scrollbar-thumb:hover {
-              background: rgba(0, 0, 0, 0.7);
+              background: #222222;
             }
             .dark .network-chain-scroll {
-              scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+              scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
             }
             .dark .network-chain-scroll::-webkit-scrollbar-thumb {
-              background: rgba(255, 255, 255, 0.28);
+              background: rgba(255, 255, 255, 0.7);
             }
             .dark .network-chain-scroll::-webkit-scrollbar-thumb:hover {
-              background: rgba(255, 255, 255, 0.45);
+              background: #ffffff;
             }
           `}</style>
 
@@ -337,15 +342,11 @@ export function NetworkSelectorModal({
                         width: "100%",
                         display: "flex",
                         alignItems: "center",
-                        gap: 10,
+                        gap: 12,
                         padding: "8px 10px",
-                        borderRadius: 14,
-                        border: isCurrent
-                          ? "1px solid var(--border)"
-                          : "1px solid transparent",
-                        background: isCurrent
-                          ? "var(--surface-soft, rgba(128, 128, 128, 0.08))"
-                          : "transparent",
+                        borderRadius: 12,
+                        border: "1px solid transparent",
+                        background: "transparent",
                         cursor: "pointer",
                         transition: "all 0.15s ease",
                         textAlign: "left",
@@ -393,50 +394,39 @@ export function NetworkSelectorModal({
                       >
                         <span
                           style={{
-                            fontSize: 13.5,
-                            fontWeight: isCurrent ? 700 : 500,
-                            color: "var(--text-primary)",
+                            fontSize: 14,
+                            fontWeight: isCurrent ? 800 : 500,
+                            color: isCurrent
+                              ? "var(--text-primary)"
+                              : "var(--text-muted)",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
+                            transition: "all 0.15s ease",
                           }}
                         >
                           {displayLabel}
                         </span>
                       </div>
 
-                      {/* Status Indicator */}
-                      <div
-                        style={{
-                          flexShrink: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          width: 20,
-                          height: 20,
-                        }}
-                      >
-                        {isSwitching ? (
+                      {/* Status Indicator (only show spinner during network switch) */}
+                      {isSwitching && (
+                        <div
+                          style={{
+                            flexShrink: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: 20,
+                            height: 20,
+                          }}
+                        >
                           <Loader2
                             size={14}
                             className="animate-spin text-blue-500"
                           />
-                        ) : isCurrent ? (
-                          <div
-                            style={{
-                              width: 18,
-                              height: 18,
-                              borderRadius: "50%",
-                              background: "#22c55e",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                            }}
-                          >
-                            <Check size={11} color="#ffffff" strokeWidth={3} />
-                          </div>
-                        ) : null}
-                      </div>
+                        </div>
+                      )}
                     </button>
                   );
                 })}
