@@ -1,8 +1,10 @@
 # ArcFun — Circle Submission Platform
 
+**Live Application:** [https://www.thearcfun.xyz/](https://www.thearcfun.xyz/)
+
 > Next-Generation Cross-Chain USDC Settlement, Instant Chat & Pay, Universal Developer-Controlled Wallets & Circle Gateway Protocol on Arc Network & EVM Chains.
 
-ArcFun is a comprehensive Web3 financial application engineered for seamless multi-chain USDC liquidity, powered by Circle CCTP V2, Circle Bridge Kit, Circle Developer-Controlled Wallets (DCW), and Circle Gateway.
+ArcFun is a comprehensive Web3 financial application engineered for seamless multi-chain USDC liquidity, powered by Circle CCTP V2, Circle Bridge Kit, Circle Developer-Controlled Wallets (DCW), and Circle Gateway. Available in production at [thearcfun.xyz](https://www.thearcfun.xyz/).
 
 ---
 
