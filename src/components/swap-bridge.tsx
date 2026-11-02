@@ -349,6 +349,7 @@ export function SwapBridgeManager({
   const wagmiConfig = useConfig();
 
   const [activeTab, setActiveTab] = useState<"bridge" | "recover" | "admin" | "history">("bridge");
+  const [isBridgeSubmitting, setIsBridgeSubmitting] = useState(false);
   const [bridgeFromAsset, setBridgeFromAsset] = useState<Asset | null>("USDC");
   const [bridgeToAsset, setBridgeToAsset] = useState<Asset | null>("USDC");
   const [bridgeFromChain, setBridgeFromChain] = useState<Chain | null>(null);
@@ -1477,7 +1478,7 @@ export function SwapBridgeManager({
     if (!bridgeFromAsset || !bridgeToAsset) return { text: "Select a token", disabled: true };
     if (!bridgeAmount || bridgeAmountNum <= 0) return { text: "Enter an amount", disabled: true };
     if (bridgeAmountRaw > balanceFromRaw) return { text: "Insufficient Balance", disabled: true };
-    if (txEngine.state === "running") return { text: "Processing…", disabled: true, loading: true };
+    if (isBridgeSubmitting || txEngine.state === "running") return { text: "Processing…", disabled: true, loading: true };
     if (txEngine.state === "pending") return { text: "Finalizing…", disabled: true, loading: true };
     if (txEngine.state === "claim_manual_required") return { text: "Manual Claim Required", disabled: true };
     if (txEngine.state === "success") return { text: "Success!", disabled: true, loading: false };
@@ -1493,7 +1494,7 @@ export function SwapBridgeManager({
   };
 
   const handleBridge = useCallback(async () => {
-    if (isGasEligibilityLoading) return;
+    if (isGasEligibilityLoading || isBridgeSubmitting) return;
     if (!bridgeFromChain || !bridgeToChain || !bridgeFromAsset || !bridgeToAsset) return;
     const btnState = getBridgeButtonState();
     if (btnState.disabled && !btnState.isSwitch) return;
@@ -1598,26 +1599,31 @@ export function SwapBridgeManager({
     // Removed redundant inline switch chain to prevent double-prompts,
     // it's handled by the button state now.
 
-    await txEngine.executeBridge({
-      tokenIn: bridgeTokenAddress,
-      amount: bridgeAmountRaw,
-      destChainId,
-      allowance: bridgeAllowance,
-      route: "cctp",
-      sourceChain: bridgeFromChain as any,
-      destChain: bridgeToChain as any,
-      fromAsset: bridgeFromAsset as any,
-      toAsset: bridgeToAsset as any,
-      formattedAmount: bridgeAmount,
-      manualClaim: isManualClaimSelfMint,
-      destAddress: (() => {
-        if (bridgeToChain?.includes("Solana")) return solanaWallet?.publicKey?.toBase58() || "";
-        if (bridgeToChain?.includes("Sui")) return suiWallet?.address || "";
-        if (bridgeToChain?.includes("Stellar")) return stellarWallet?.address || "";
-        return address || "";
-      })(),
-    });
-  }, [address, bridgeAmountRaw, bridgeAllowance, bridgeTokenAddress, tokenInAddr, bridgeFromChain, bridgeToChain, bridgeFromAsset, bridgeToAsset, bridgeAmount, txEngine, walletChainId, switchChainAsync, refetchBalance, mode, isManualClaimSelfMint, isGasEligibilityLoading]);
+    setIsBridgeSubmitting(true);
+    try {
+      await txEngine.executeBridge({
+        tokenIn: bridgeTokenAddress,
+        amount: bridgeAmountRaw,
+        destChainId,
+        allowance: bridgeAllowance,
+        route: "cctp",
+        sourceChain: bridgeFromChain as any,
+        destChain: bridgeToChain as any,
+        fromAsset: bridgeFromAsset as any,
+        toAsset: bridgeToAsset as any,
+        formattedAmount: bridgeAmount,
+        manualClaim: isManualClaimSelfMint,
+        destAddress: (() => {
+          if (bridgeToChain?.includes("Solana")) return solanaWallet?.publicKey?.toBase58() || "";
+          if (bridgeToChain?.includes("Sui")) return suiWallet?.address || "";
+          if (bridgeToChain?.includes("Stellar")) return stellarWallet?.address || "";
+          return address || "";
+        })(),
+      });
+    } finally {
+      setIsBridgeSubmitting(false);
+    }
+  }, [address, bridgeAmountRaw, bridgeAllowance, bridgeTokenAddress, tokenInAddr, bridgeFromChain, bridgeToChain, bridgeFromAsset, bridgeToAsset, bridgeAmount, txEngine, walletChainId, switchChainAsync, refetchBalance, mode, isManualClaimSelfMint, isGasEligibilityLoading, isBridgeSubmitting]);
 
   const handleResumeBridge = useCallback(async () => {
     const targetBurnHash = txEngine.burnHash || txEngine.summary?.burnHash;

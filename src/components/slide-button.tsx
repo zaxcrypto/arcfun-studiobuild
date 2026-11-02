@@ -17,8 +17,6 @@ export function SlideButton({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [dragLimit, setDragLimit] = useState(260);
-  const loadingRef = useRef(loading);
-  loadingRef.current = loading;
   
   const x = useMotionValue(0);
   const textOpacity = useTransform(x, [0, Math.max(1, dragLimit * 0.45)], [1, 0.15]);
@@ -45,12 +43,12 @@ export function SlideButton({
     };
   }, []);
 
-  // Forcefully and instantly reset slider thumb position whenever loading ends or button becomes disabled
+  // Reset slider thumb to left only when an operation ends (loading becomes false) or button is disabled
   useEffect(() => {
-    if (disabled || !loading) {
-      animate(x, 0, { type: "spring", stiffness: 500, damping: 28 });
+    if (!loading && !disabled) {
+      animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
     }
-  }, [disabled, loading, x]);
+  }, [loading, disabled, x]);
 
   const handleDragEnd = () => {
     if (disabled || loading) return;
@@ -64,13 +62,6 @@ export function SlideButton({
         duration: 0.12,
       });
       onComplete(); // Instant execution trigger
-      
-      // Safety auto-reset: if parent does not enter loading state (e.g. sync rejection or error), spring back
-      setTimeout(() => {
-        if (!loadingRef.current) {
-          animate(x, 0, { type: "spring", stiffness: 500, damping: 28 });
-        }
-      }, 350);
     } else {
       // Spring back to start
       animate(x, 0, {
