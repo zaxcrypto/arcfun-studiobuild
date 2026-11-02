@@ -1,243 +1,176 @@
-# ArcFun
+# ArcFun — Circle Submission Platform
 
-> **Next-Generation Cross-Chain Token Launchpad, Universal Liquidity Hub & Circle Gateway Protocol on Arc Network**
+> **Next-Generation Cross-Chain USDC Settlement, Instant Chat & Pay, Universal Developer-Controlled Wallets & Circle Gateway Protocol on Arc Network & EVM Chains.**
 
-[![CI](https://github.com/zaxcrypto/Arc.fun/actions/workflows/ci.yml/badge.svg)](https://github.com/zaxcrypto/Arc.fun/actions/workflows/ci.yml)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.2.12-black)](https://nextjs.org/)
-[![Hardhat](https://img.shields.io/badge/Hardhat-2.28-yellow)](https://hardhat.org/)
-[![Solidity](https://img.shields.io/badge/Solidity-0.8.28-lightgrey)](https://soliditylang.org/)
-
-ArcFun is a comprehensive Web3 platform built around the **Arc Network**, offering instantaneous cross-chain token launches backed by bonding curve liquidity, seamless Circle Gateway / CCTP USDC bridging, passkey-secured Developer-Controlled Wallets (DCW), and an immutable transaction recovery system.
+ArcFun is a comprehensive Web3 financial application engineered for seamless multi-chain USDC liquidity, powered by **Circle CCTP V2**, **Circle Bridge Kit**, **Circle Developer-Controlled Wallets (DCW)**, and **Circle Gateway**.
 
 ---
 
-## Table of Contents
+## 🌟 The 4 Core Active Modules
 
-- [Overview & Key Features](#overview--key-features)
-- [Architecture & Tech Stack](#architecture--tech-stack)
-- [Supported Networks & Domains](#supported-networks--domains)
-- [Implementation Status](#implementation-status)
-- [Prerequisites](#prerequisites)
-- [Local Development Setup](#local-development-setup)
-- [Environment Variables](#environment-variables)
-- [Testing & Quality Assurance](#testing--quality-assurance)
-- [Smart Contract Architecture & Upgrades](#smart-contract-architecture--upgrades)
-- [Database Migrations (Supabase)](#database-migrations-supabase)
-- [Circle Gateway & Webhook Integration](#circle-gateway--webhook-integration)
-- [Security Policy & Disclosures](#security-policy--disclosures)
-- [Contributing](#contributing)
+ArcFun provides four interconnected, production-ready modules built specifically on Circle's cross-chain architecture:
 
----
+### 1. 🌉 Circle CCTP V2 Cross-Chain Bridge
+- **Circle CCTP V2 Native Integration:** Fast, trust-minimized USDC cross-chain transfers between Arc Network and 9+ major EVM chains (Arbitrum, Base, Optimism, Polygon, Avalanche, Ink, Unichain, Linea, and Ethereum Sepolia).
+- **Circle Bridge Kit Integration:** High-performance client-side and server-side orchestration powered by the official `@circle-fin/bridge-kit` SDK.
+- **Backend Gas Fee Sponsorship:** Sponsoring relayer allows recipient execution on destination chains without requiring native gas tokens (sponsored minting).
+- **Manual Wallet Claim Fallback:** Complete self-custodial safety; if a relayer is congested or offline, users can claim destination mints directly via their connected Web3 wallet.
+- **Universal Transaction History & Scoping:** Comprehensive transaction tracker, indexing on-chain message bytes, attestations, and explorer receipts across all supported domains.
 
-## Overview & Key Features
+### 2. 💬 Chat & Pay with AutoPay
+- **Social On-Chain Payments:** Send and receive USDC directly inside real-time peer-to-peer and group chats.
+- **AutoPay Smart Execution:** Programmable recurring and conditional micro-transfers with customizable cooldowns and transaction limits.
+- **Circle Developer-Controlled Wallets (DCW):** Non-custodial biometric/passkey-secured execution and user-controlled wallet provisioning.
+- **Payment Verification:** Real-time on-chain verification, cryptographic signature validation, and instant database settlement.
 
-1. **Bonding Curve Token Launchpad (`ArcFunCurve`)**
-   - Instant token launches with linear or exponential pricing formulas.
-   - Dual-asset quotation support (USDC, EURC, and custom collateral).
-   - Automated graduation mechanism migrating liquidity to DEX pools once funding thresholds are met.
-2. **Circle Gateway & CCTP V2 Cross-Chain Routing**
-   - Near-instant USDC transfers across EVM and Solana environments.
-   - Gas-sponsored minting relayer allowing recipient execution without native gas tokens.
-   - Resilient multi-tier burn/mint recovery mechanism using on-chain transaction hashes.
-3. **Circle Developer-Controlled Wallets (DCW) with WebAuthn**
-   - Non-custodial user experience powered by biometrics and WebAuthn passkeys.
-   - Deterministic wallet provisioning with automatic recovery.
-4. **Institutional Tokenization Bridges**
-   - Dinari dShare integration enabling token pairs backed by real-world assets (RWAs).
-5. **Real-Time Market Analytics & Community Engagement**
-   - High-performance financial charts built on Lightweight Charts.
-   - Token chat rooms and sentiment tracking.
+### 3. 💳 ArcFun Wallet
+- **Universal Web3 Wallet Management:** Seamless multi-chain connection via Privy, WebAuthn Passkeys, and Wagmi/Viem.
+- **Multi-Chain Transaction Signing:** Native support for EVM chains, Solana, and Arc Network.
+- **Security Center:** Active session management, spending limit approvals, cryptographic security checks, and hardware key recovery.
+
+### 4. 🌐 Circle Gateway
+- **Unified Multi-Chain Balance Aggregation:** Consolidate and monitor user USDC liquidity across disparate rollups and networks into a unified dashboard.
+- **Cross-Chain Liquidity Routing:** Seamless rebalancing and gas-optimized deposits.
+- **Idempotent Webhook Processing:** Secure asynchronous settlement tracking powered by Circle Webhooks with replay attack prevention and signature verification.
 
 ---
 
-## Architecture & Tech Stack
+## 🏗️ Architecture & Transaction Flow
 
 ```mermaid
-graph TD
-    Client[Next.js 16 Web App / React 19] --> API[Next.js Server Routes]
-    Client --> Wagmi[Wagmi / RainbowKit / Solana Wallet Adapter]
+flowchart TD
+    Client["ArcFun Client (Next.js 16 / React 19 / Privy)"]
+    API["ArcFun Backend API Routes"]
+    CircleAPI["Circle Developer API / DCW / Iris CCTP"]
+    Relayer["Sponsoring Gas Relayer (EVM / Viem)"]
+    Supabase[("Supabase DB & Realtime Engine")]
 
-    API --> Supabase[(Supabase Database & Realtime)]
-    API --> CircleAPI[Circle Developer API / DCW / CCTP]
-    API --> Relayer[Ethers / Viem Sponsoring Relayer]
+    Client -->|"1. Initiate Bridge / Payment / DCW Action"| API
+    Client -->|"Direct Signing"| CircleAPI
 
-    Wagmi --> ArcChain[Arc Testnet RPC (5042002)]
-    Wagmi --> EVMChains[Sepolia / Base / Arbitrum / Unichain]
+    API -->|"Fetch Iris Attestation & Route Transfers"| CircleAPI
+    API -->|"Sponsor Gas Execution"| Relayer
+    API -->|"Record Scoped Ledger & Events"| Supabase
 
-    ArcChain --> Factory[ArcFunTokenFactory (UUPS Proxy)]
-    Factory --> Curves[ArcFunCurve Instances]
-    Curves --> DEX[ArcFunSwap AMM]
-
-    CircleHook[Circle Gateway Webhook] --> API
+    Relayer -->|"Execute Destination Mint"| EVMDest["Destination EVM Chains (Base, Arb, OP, Poly, Avax...)"]
+    CircleWebhook["Circle Gateway Webhooks"] -->|"Cryptographic Event Sync"| API
 ```
 
-- **Frontend & Fullstack:** Next.js 16 (App Router, Turbopack), React 19, Tailwind CSS v4, Framer Motion, Lightweight Charts, Zustand.
-- **Smart Contracts:** Solidity `0.8.28`, OpenZeppelin v5 Upgradeable contracts (UUPS), Hardhat, Ethers v6, Viem v2.
-- **Off-chain Infrastructure:** Supabase PostgreSQL with Row Level Security (RLS), Cloudflare Turnstile, Circle Developer-Controlled Wallets SDK.
+---
+
+## 🌐 Supported Networks & CCTP Domains
+
+| Network | Chain ID | CCTP Domain | Native Asset | Support Mode |
+| :--- | :--- | :--- | :--- | :--- |
+| **Arc Mainnet / Testnet** | 5042001 / 5042002 | — | USDC | Native Core |
+| **Ethereum** | 1 / 11155111 | 0 | ETH | Mainnet & Testnet |
+| **Arbitrum** | 42161 / 421614 | 3 | ETH | Mainnet & Testnet |
+| **Base** | 8453 / 84532 | 6 | ETH | Mainnet & Testnet |
+| **Optimism** | 10 / 11155420 | 2 | ETH | Mainnet & Testnet |
+| **Polygon PoS** | 137 / 80002 | 7 | POL | Mainnet & Testnet |
+| **Avalanche** | 43114 / 43113 | 1 | AVAX | Mainnet & Testnet |
+| **Ink** | 57073 / 763373 | — | ETH | Mainnet & Testnet |
+| **Unichain** | 130 / 1301 | 10 | ETH | Mainnet & Testnet |
+| **Linea** | 59144 / 59141 | — | ETH | Mainnet & Testnet |
 
 ---
 
-## Supported Networks & Domains
+## 💻 Tech Stack
 
-The platform supports cross-chain liquidity between Arc and major CCTP-enabled chains:
-
-| Network | Chain ID | Circle CCTP Domain | Native Gas Asset | Contract Status |
-| :--- | :---: | :---: | :---: | :---: |
-| **Arc Testnet** | `5042002` | — | `USDC` | Deployed & Active |
-| **Ethereum Sepolia** | `11155111` | `0` | `ETH` | Deployed & Supported |
-| **Base Sepolia** | `84532` | `6` | `ETH` | Supported |
-| **Arbitrum Sepolia** | `421614` | `3` | `ETH` | Supported |
-| **Unichain Sepolia** | `1301` | `10` | `ETH` | Supported |
-| **Solana Devnet** | — | `5` | `SOL` | Supported via DCW |
-
-*Note: All networks operate in testnet/devnet mode during current release phase.*
+- **Frontend & Fullstack Framework:** Next.js 16 (App Router), React 19, Tailwind CSS, Framer Motion, Zustand.
+- **Web3 & Circle Tooling:** `@circle-fin/bridge-kit`, `@circle-fin/user-controlled-wallets`, Privy SDK, Viem v2, Wagmi v2, Ethers v6.
+- **Database & Realtime Backend:** Supabase PostgreSQL with strict Row Level Security (RLS) policies and Realtime event subscriptions.
+- **Security & Infrastructure:** EIP-712 typed signing, Cloudflare protection, idempotent webhook replay guards, and gas-sponsored relayer clustering.
 
 ---
 
-## Implementation Status
+## 🚀 Local Development Setup
 
-- [x] **Smart Contracts:** Factory, Bonding Curve, AMM Swap, and ERC-20 template compiled and verified on Arc Testnet.
-- [x] **Upgradeable Proxies:** UUPS pattern managed via `@openzeppelin/hardhat-upgrades` (manifest recorded in `.openzeppelin/unknown-5042002.json`).
-- [x] **Gateway Sponsored Minting:** Automated gas fee estimation with dynamic EIP-1559 priority fee clamping.
-- [x] **Webhook Validation:** Cryptographic verification using Circle public keys, timestamp skew validation, and replay rejection.
-- [x] **Automated Testing:** 78 passing test suites covering smart contracts, webhook verification, wallet recovery, and charting algorithms.
-- [ ] **Mainnet Deployment:** Pending formal third-party smart contract audits.
-
----
-
-## Prerequisites
-
+### 1. Prerequisites
 - **Node.js:** `v20.x` or `v22.x` (LTS recommended)
 - **Package Manager:** `npm` (v10+)
 - **Git**
 
----
-
-## Local Development Setup
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/zaxcrypto/Arc.fun.git
-   cd Arc.fun
-   ```
-
-2. **Install dependencies:**
-   > Note: Due to React 19 peer dependencies in some Web3 libraries, `.npmrc` is configured with `legacy-peer-deps=true`.
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment variables:**
-   ```bash
-   cp .env.example .env.local
-   ```
-   Fill in your local RPC endpoints, Circle API keys, and Supabase credentials.
-
-4. **Compile smart contracts:**
-   ```bash
-   npm run compile
-   ```
-
-5. **Start the local development server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) with your browser.
-
----
-
-## Environment Variables
-
-Refer to [`.env.example`](file:///.env.example) for the exhaustive list. Essential groups include:
-
-- `NEXT_PUBLIC_ARC_RPC`: RPC URL for Arc Network testnet.
-- `NEXT_PUBLIC_ARC_CHAIN_ID`: `5042002`
-- `CIRCLE_API_KEY`: Circle developer portal key for DCW and Gateway.
-- `CIRCLE_ENTITY_SECRET`: 32-byte hex encryption secret for DCW requests.
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase project connection.
-- `SUPABASE_SERVICE_ROLE_KEY`: Privileged backend key for processing webhooks and relayer operations.
-- `RELAYER_PRIVATE_KEY`: Backend wallet sponsoring cross-chain transactions (keep strictly secure!).
-
----
-
-## Testing & Quality Assurance
-
-ArcFun uses a unified testing framework comprising Hardhat, Mocha, Jest, and Node test runner:
-
+### 2. Clone Repository
 ```bash
-# Run all automated test suites (Hardhat + Backend + Unit)
+git clone https://github.com/zaxcrypto/arcfun-studiobuild.git
+cd arcfun-studiobuild
+```
+
+### 3. Install Dependencies
+```bash
+npm install --legacy-peer-deps
+```
+
+### 4. Configure Environment Variables
+Create a local `.env.local` file using the required names listed below:
+```bash
+cp .env.example .env.local
+```
+
+### 5. Start Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+---
+
+## 🔐 Environment Variables (By Name Only)
+
+Configure the following variables in your hosting environment (do not expose private keys or secrets):
+
+### Circle Developer & DCW Configuration
+- `CIRCLE_API_KEY`: Circle Developer Portal API key.
+- `CIRCLE_ENTITY_SECRET`: 32-byte hex encryption secret for DCW operations.
+- `NEXT_PUBLIC_CIRCLE_IRIS_API_URL`: Iris attestation endpoint for CCTP V2.
+
+### Privy & Authentication
+- `NEXT_PUBLIC_PRIVY_APP_ID`: Privy application identifier.
+- `PRIVY_APP_SECRET`: Privy backend secret.
+
+### Supabase (Database & Realtime)
+- `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase client-safe anonymous key.
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase privileged service-role key.
+
+### Gas Sponsorship & Relayer
+- `RELAYER_PRIVATE_KEY` / `CCTP_RELAYER_PRIVATE_KEY`: Sponsoring gas wallet private key.
+- `CRON_SECRET`: Bearer token for authenticating scheduled reconciliation tasks.
+
+### Multi-Chain RPC Endpoints
+- `NEXT_PUBLIC_ARCFUN_MAINNET_ENABLED`: Flag (`true` / `false`) toggling Mainnet or Testnet modes.
+- `NEXT_PUBLIC_ARC_MAINNET_RPC_URL` / `NEXT_PUBLIC_ARC_RPC`
+- `NEXT_PUBLIC_BASE_MAINNET_RPC_URL` / `NEXT_PUBLIC_BASE_SEPOLIA_RPC`
+- `NEXT_PUBLIC_ARB_MAINNET_RPC_URL` / `NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC`
+- `NEXT_PUBLIC_OP_MAINNET_RPC_URL` / `NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC`
+- `NEXT_PUBLIC_POLYGON_MAINNET_RPC_URL`
+- `NEXT_PUBLIC_AVALANCHE_MAINNET_RPC_URL`
+- `NEXT_PUBLIC_INK_MAINNET_RPC_URL`
+- `NEXT_PUBLIC_UNICHAIN_MAINNET_RPC_URL`
+- `NEXT_PUBLIC_LINEA_MAINNET_RPC_URL`
+
+---
+
+## 🧪 Testing & Verification
+
+Run the automated test suites:
+```bash
+# Run unit & integration tests
 npm test
 
-# Run smart contract tests only
-npm run test:contracts
+# Run CCTP and Bridge Kit tests
+npx jest src/__tests__/bridge-history-production.test.ts src/__tests__/cctp-gas-recovery-audit.test.ts
 
-# Run backend webhook and security invariance tests
-npm run test:backend
-
-# Run TypeScript type-checking
-npm run typecheck
-
-# Run ESLint across code and tests
-npm run lint
-
-# Validate full production build
+# Production build check
 npm run build
 ```
 
 ---
 
-## Smart Contract Architecture & Upgrades
+## 🛡️ Security & Disclosures
 
-Contracts are located in [`contracts/`](file:///contracts/):
-- **`ArcFunTokenFactory.sol`**: Deploys new bonding curves and creates initial token supplies.
-- **`ArcFunCurve.sol`**: Implements the bonding curve trading mechanism and enforces graduation limits.
-- **`ArcFunSwap.sol`**: Internal liquidity pool routing trades post-graduation (UUPS upgradeable).
-- **`ArcFunToken.sol`**: Standard ERC-20 token implementation with launchpad protections.
-
-### Upgrade Precautions
-- **Storage Layout Manifest:** The repository preserves [`.openzeppelin/unknown-5042002.json`](file:///.openzeppelin/unknown-5042002.json). Never delete or modify this file manually; it is required by OpenZeppelin Upgrades to prevent storage collisions during proxy upgrades on Arc Testnet.
-- **Deployment Scripts:** Verified deployment and upgrade scripts are located in [`scripts/`](file:///scripts/).
-
----
-
-## Database Migrations (Supabase)
-
-Database schema updates are managed via standard SQL migrations in [`src/supabase/migrations/`](file:///src/supabase/migrations/):
-- Migrations `001` through `029` define schemas for user profiles, token launches, trade logs, and idempotent webhook audit logs (`029_gateway_webhook_events.sql`).
-- Apply migrations using the Supabase CLI:
-  ```bash
-  supabase db push
-  ```
-
----
-
-## Circle Gateway & Webhook Integration
-
-ArcFun uses Circle Gateway to coordinate fast cross-chain USDC settlements.
-- **Webhook Endpoint:** [`/api/webhooks/circle-gateway`](file:///src/app/api/webhooks/circle-gateway/route.ts)
-- **Signature Verification:** Validates `X-Circle-Signature` using RSA public keys fetched from official Circle certificate endpoints.
-- **Replay Protection:** Unique event IDs are atomically recorded in `gateway_webhook_events`.
-- **Registration Script:** [`scripts/setup-circle-gateway-webhook.ts`](file:///scripts/setup-circle-gateway-webhook.ts) automates subscription creation with Circle Developer API.
-
----
-
-## Security Policy & Disclosures
-
-Please review our [SECURITY.md](file:///SECURITY.md) for vulnerability reporting guidelines and response SLAs. If you discover a potential vulnerability, email **`supportarcfun@gmail.com`** immediately.
-
----
-
-## Contributing
-
-We welcome community contributions. To contribute:
-1. Fork the repository and create your feature branch (`git checkout -b feature/amazing-feature`).
-2. Verify code quality: `npm run lint && npm run typecheck && npm test`.
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Push to your branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request against the `main` branch.
-
----
-
-## License
-
-Licensing terms are subject to maintainer / owner specification. If you are preparing this repository for open-source distribution, adding an explicit license file (such as MIT or Apache 2.0) is recommended.
+ArcFun adheres to defense-in-depth security principles:
+- **EIP-712 & Replay Guards:** All off-chain intent verifications use domain-separated cryptographic hashing.
+- **Idempotent Webhooks:** Circle Gateway events verify timestamps and RSA signatures before committing transactions.
+- **Non-Custodial Architecture:** Keys are protected via Circle DCW and Privy hardware/passkey abstractions.
