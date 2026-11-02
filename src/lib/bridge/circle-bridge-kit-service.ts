@@ -14,6 +14,7 @@
 import { BridgeKit, TransferSpeed, Arc, Base } from "@circle-fin/bridge-kit";
 import { createViemAdapterFromProvider, ViemAdapter } from "@circle-fin/adapter-viem-v2";
 import type { EIP1193Provider } from "viem";
+import { http, fallback } from "viem";
 import { MAINNET_CHAIN_REGISTRY, isFastTransferSupported } from "@/config/mainnet-chain-registry";
 
 export interface BridgeKitBurnResult {
@@ -88,6 +89,19 @@ export class CircleBridgeKitService {
       provider,
       capabilities: {
         addressContext: "user-controlled"
+      },
+      getPublicClient: ({ chain }: any) => {
+        if (chain.id === 5042 || chain.chain === "Arc" || chain.name === "Arc") {
+          const arcRpc = process.env.NEXT_PUBLIC_ARC_MAINNET_RPC_URL || process.env.ARC_MAINNET_RPC_URL || "https://rpc.mainnet.arc.io/";
+          return {
+            chain,
+            transport: fallback([
+              http(arcRpc, { retryCount: 3, retryDelay: 1000 }),
+              http("https://rpc.mainnet.arc.io/", { retryCount: 3, retryDelay: 1000 })
+            ])
+          } as any;
+        }
+        return undefined as any;
       }
     });
   }
