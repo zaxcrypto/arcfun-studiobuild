@@ -441,18 +441,13 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
-/* ── Custom thin black scrollbar on left sidebar for desktop & mobile ── */
-.sidebar-scroll-container {
-  scrollbar-width: thin;
-  scrollbar-color: #000000 transparent;
-}
-
+/* ── Custom ultra-thin black scrollbar on left sidebar for desktop & mobile ── */
 .sidebar-scroll-container::-webkit-scrollbar {
-  width: 3.5px;
+  width: 2px !important;
 }
 
 .sidebar-scroll-container::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
 }
 
 .sidebar-scroll-container::-webkit-scrollbar-button {
@@ -462,25 +457,31 @@
 }
 
 .sidebar-scroll-container::-webkit-scrollbar-thumb {
-  background: #000000;
-  border-radius: 99px;
+  background: #000000 !important;
+  border-radius: 99px !important;
   transition: background 0.2s ease;
 }
 
 .sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #222222;
-}
-
-.dark .sidebar-scroll-container {
-  scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
+  background: #222222 !important;
 }
 
 .dark .sidebar-scroll-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.75) !important;
 }
 
 .dark .sidebar-scroll-container::-webkit-scrollbar-thumb:hover {
-  background: #ffffff;
+  background: #ffffff !important;
+}
+
+@supports (-moz-appearance: none) {
+  .sidebar-scroll-container {
+    scrollbar-width: thin;
+    scrollbar-color: #000000 transparent;
+  }
+  .dark .sidebar-scroll-container {
+    scrollbar-color: rgba(255, 255, 255, 0.75) transparent;
+  }
 }
 
 /* ── AskORO-Inspired Curved Main Container (Curved Left Edge, Right Edge Flush to Browser) ── */

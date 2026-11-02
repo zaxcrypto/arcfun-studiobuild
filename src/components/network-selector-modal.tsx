@@ -153,17 +153,13 @@ export function NetworkSelectorModal({
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Scoped CSS for Sleek Custom Thin Black Scrollbar */}
+          {/* Scoped CSS for Sleek Custom Ultra-Thin Black Scrollbar */}
           <style>{`
-            .network-chain-scroll {
-              scrollbar-width: thin;
-              scrollbar-color: #000000 transparent;
-            }
             .network-chain-scroll::-webkit-scrollbar {
-              width: 3.5px;
+              width: 2px !important;
             }
             .network-chain-scroll::-webkit-scrollbar-track {
-              background: transparent;
+              background: transparent !important;
             }
             .network-chain-scroll::-webkit-scrollbar-button {
               display: none !important;
@@ -171,20 +167,27 @@ export function NetworkSelectorModal({
               height: 0 !important;
             }
             .network-chain-scroll::-webkit-scrollbar-thumb {
-              background: #000000;
-              border-radius: 99px;
+              background: #000000 !important;
+              border-radius: 99px !important;
             }
             .network-chain-scroll::-webkit-scrollbar-thumb:hover {
-              background: #222222;
-            }
-            .dark .network-chain-scroll {
-              scrollbar-color: rgba(255, 255, 255, 0.7) transparent;
+              background: #222222 !important;
             }
             .dark .network-chain-scroll::-webkit-scrollbar-thumb {
-              background: rgba(255, 255, 255, 0.7);
+              background: rgba(255, 255, 255, 0.75) !important;
             }
             .dark .network-chain-scroll::-webkit-scrollbar-thumb:hover {
-              background: #ffffff;
+              background: #ffffff !important;
+            }
+
+            @supports (-moz-appearance: none) {
+              .network-chain-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: #000000 transparent;
+              }
+              .dark .network-chain-scroll {
+                scrollbar-color: rgba(255, 255, 255, 0.75) transparent;
+              }
             }
           `}</style>
 
@@ -235,7 +238,7 @@ export function NetworkSelectorModal({
               style={{
                 pointerEvents: "auto",
                 width: "100%",
-                maxWidth: 320,
+                maxWidth: 248,
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
                 borderRadius: 20,
@@ -243,10 +246,10 @@ export function NetworkSelectorModal({
                   "0 20px 48px -6px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--border-soft)",
                 backdropFilter: "blur(24px)",
                 WebkitBackdropFilter: "blur(24px)",
-                padding: "14px",
+                padding: "14px 10px 12px 10px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 8,
+                gap: 6,
                 overflow: "hidden",
               }}
             >
@@ -256,7 +259,7 @@ export function NetworkSelectorModal({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  paddingBottom: 2,
+                  padding: "0 2px 2px 4px",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -313,16 +316,17 @@ export function NetworkSelectorModal({
                 </button>
               </div>
 
-              {/* Chain List Container with Custom Thin Dark Scrollbar */}
+              {/* Chain List Container with Custom Ultra-Thin Black Scrollbar */}
               <div
                 className="network-chain-scroll"
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: 3,
+                  gap: 2,
                   maxHeight: 300,
                   overflowY: "auto",
-                  paddingRight: 4,
+                  paddingRight: 5,
+                  paddingLeft: 2,
                   marginRight: -2,
                 }}
               >
@@ -342,8 +346,8 @@ export function NetworkSelectorModal({
                         width: "100%",
                         display: "flex",
                         alignItems: "center",
-                        gap: 12,
-                        padding: "8px 10px",
+                        gap: 10,
+                        padding: "7px 6px",
                         borderRadius: 12,
                         border: "1px solid transparent",
                         background: "transparent",
