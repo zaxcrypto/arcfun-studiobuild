@@ -509,6 +509,7 @@ export function SwapBridgeManager({
 
   const handleInputFocus = () => {
     if (txEngine.state === "success" || txEngine.state === "failed") {
+      txEngine.dismiss();
       txTrackerRef.current?.dismiss();
     }
   };
@@ -2204,7 +2205,13 @@ export function SwapBridgeManager({
                             <input className="swap-input-text" type="number" placeholder="0" value={bridgeAmount}
                               onChange={e => {
                                 const val = e.target.value;
-                                if (val === "" || parseFloat(val) >= 0) setBridgeAmount(val);
+                                if (val === "" || parseFloat(val) >= 0) {
+                                  setBridgeAmount(val);
+                                  if (txEngine.state === "failed" || txEngine.state === "success") {
+                                    txEngine.dismiss();
+                                    txTrackerRef.current?.dismiss();
+                                  }
+                                }
                               }}
                               onKeyDown={e => { if (e.key === "-" || e.key === "e") e.preventDefault(); }}
                               onFocus={handleInputFocus}
@@ -2445,6 +2452,10 @@ export function SwapBridgeManager({
                                     const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
                                     let val = Math.floor(totalBal * (percent / 100) * precision) / precision;
                                     setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                    if (txEngine.state === "failed" || txEngine.state === "success") {
+                                      txEngine.dismiss();
+                                      txTrackerRef.current?.dismiss();
+                                    }
                                   }
                                 }}
                                 style={{
