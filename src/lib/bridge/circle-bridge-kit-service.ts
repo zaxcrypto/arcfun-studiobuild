@@ -202,7 +202,7 @@ export class CircleBridgeKitService {
       req.onProgress?.("APPROVE_CONFIRMED", { txHash: "0x0", native: true });
     }
 
-    // 3. Prepare & Execute Burn on Source Chain
+    // 3. Prepare & Execute Burn on Source Chain with safe retry
     req.onProgress?.("BURNING", { chain: req.sourceChain });
     const burnParams = {
       source: sourceContext,
@@ -214,8 +214,16 @@ export class CircleBridgeKitService {
       }
     };
 
-    const burnAction = await (provider as any).burn(burnParams);
-    const burnTxHash = await burnAction.execute();
+    let burnTxHash: string;
+    try {
+      const burnAction = await (provider as any).burn(burnParams);
+      burnTxHash = await burnAction.execute();
+    } catch (burnErr: any) {
+      console.warn("[CircleBridgeKit] Initial burn attempt error, retrying with fresh state...", burnErr);
+      await new Promise(r => setTimeout(r, 1200));
+      const retryAction = await (provider as any).burn(burnParams);
+      burnTxHash = await retryAction.execute();
+    }
     req.onProgress?.("BURN_CONFIRMED", { txHash: burnTxHash });
     await adapter.waitForTransaction(burnTxHash, undefined, sourceChain as any);
 
