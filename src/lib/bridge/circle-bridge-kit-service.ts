@@ -202,18 +202,15 @@ export class CircleBridgeKitService {
     // Convert human readable amount (e.g. 0.01) to atomic units (6 decimals for CCTP)
     const atomicAmount = BigInt(Math.round(parseFloat(req.amount) * 1_000_000)).toString();
 
-    // 2. Prepare & Execute Approval if needed (Skipped for native gas assets like Arc Mainnet USDC)
-    const isNativeGasAsset = req.sourceChain.toLowerCase().includes("arc");
-    if (!isNativeGasAsset) {
-      req.onProgress?.("APPROVING", { chain: req.sourceChain });
-      const approveAction = await (provider as any).approve(sourceContext, atomicAmount);
-      if (approveAction && approveAction.type !== "noop") {
-        const approveTxHash = await approveAction.execute();
-        req.onProgress?.("APPROVE_CONFIRMED", { txHash: approveTxHash });
-        await adapter.waitForTransaction(approveTxHash, undefined, sourceChain as any);
-      }
+    // 2. Prepare & Execute Approval
+    req.onProgress?.("APPROVING", { chain: req.sourceChain });
+    const approveAction = await (provider as any).approve(sourceContext, atomicAmount);
+    if (approveAction && approveAction.type !== "noop") {
+      const approveTxHash = await approveAction.execute();
+      req.onProgress?.("APPROVE_CONFIRMED", { txHash: approveTxHash });
+      await adapter.waitForTransaction(approveTxHash as `0x${string}`, undefined, sourceChain as any);
     } else {
-      req.onProgress?.("APPROVE_CONFIRMED", { txHash: "0x0", native: true });
+      req.onProgress?.("APPROVE_CONFIRMED", { txHash: "0x0" });
     }
 
     // 3. Prepare & Execute Burn on Source Chain with safe retry
