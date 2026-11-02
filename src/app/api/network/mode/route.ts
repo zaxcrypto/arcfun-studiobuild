@@ -24,7 +24,11 @@ export async function GET(req: Request) {
     missing: readiness.missing,
     supportedChains: {
       testnet: ["Arc Testnet"],
-      mainnet: isEnabled ? ["Arc Mainnet", "Base Mainnet"] : [],
+      mainnet: isEnabled ? [
+        "Arc Mainnet", "Base Mainnet", "Arbitrum Mainnet", "Ethereum Mainnet",
+        "OP Mainnet", "Polygon Mainnet", "Avalanche Mainnet", "Sonic Mainnet",
+        "Ink Mainnet", "Unichain Mainnet", "Linea Mainnet"
+      ] : [],
     },
     defaultNetwork: "testnet",
   });
