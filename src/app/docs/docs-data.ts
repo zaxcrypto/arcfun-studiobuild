@@ -127,46 +127,171 @@ ArcFun is engineered across four decoupled architectural layers to guarantee sec
 \`\`\`
 `
   },
-  {
+    {
     id: 'bridge-overview',
     title: 'Circle CCTP Cross-Chain Bridge',
     category: 'Circle CCTP Bridge',
     breadcrumbs: ['Circle CCTP Bridge', 'Cross-Chain', 'Overview'],
-    summary: 'Frictionless multi-chain native USDC transfers across EVM and non-EVM ecosystems powered by Circle CCTP V2.',
+    summary: 'Frictionless multi-chain native USDC transfers across EVM and Solana ecosystems powered by Circle CCTP V2.',
     subsections: [
       { id: 'how-bridging-works', title: 'How ArcFun Bridging Works' },
-      { id: 'circle-cctp-routing', title: 'Circle CCTP Integration' },
-      { id: 'burn-mint-safety', title: 'Burn-and-Mint Security' }
+      { id: 'eight-step-lifecycle', title: 'The 8-Step Bridge Lifecycle' },
+      { id: 'circle-cctp-routing', title: 'Circle CCTP V2 Architecture' },
+      { id: 'burn-mint-safety', title: 'Burn-and-Mint Security & Self-Claim Recovery' }
     ],
     content: `
 ### How ArcFun Bridging Works
 
-The **ArcFun Circle CCTP Bridge** module allows users to transfer native USDC seamlessly between blockchains without manual wrap/unwrap steps or risky liquidity pool bridges.
+The **ArcFun Circle CCTP Bridge** enables users to transfer native USDC seamlessly across 11 EVM Mainnet networks and Solana Mainnet without wrap/unwrap friction or vulnerable liquidity pools.
 
-Users can bridge between:
-- **Ethereum & Layer-2s:** Ethereum, Arbitrum, Base, Optimism, Linea, Ink, Unichain, Polygon, Avalanche, Sonic
-- **Non-EVM Blockchains:** Solana, Sui, Stellar
-- **Testnets:** Arc Testnet, Sepolia networks, Monad Testnet, Sonic Testnet
-
----
-
-### Circle CCTP Integration
-
-For native USDC transfers, ArcFun leverages **Circle's Cross-Chain Transfer Protocol (CCTP)**:
-1. **Burn on Source:** Native USDC is burned directly on the source blockchain.
-2. **Attestation:** Circle's attestation service cryptographically confirms the burn.
-3. **Mint on Destination:** Native, un-wrapped USDC is minted directly on the recipient chain.
-
-This eliminates the security vulnerabilities of traditional wrapped tokens and synthetic assets.
+Users can bridge across:
+- **EVM Mainnet Networks:** Arc Mainnet, Base, Ethereum, Arbitrum One, OP Mainnet, Polygon, Avalanche C-Chain, Sonic, Ink, Unichain, and Linea.
+- **Solana Ecosystem:** Solana Mainnet (Domain 5) with dynamic SPL Associated Token Account (ATA) handling.
+- **Developer Testnets:** Arc Testnet, Sepolia, and Solana Devnet.
 
 ---
 
-### Burn-and-Mint Security
+### The 8-Step Bridge Lifecycle
 
-ArcFun provides permissionless burn-and-mint settlement:
-- **No Liquidity Pools or Slippage:** 1:1 cross-chain capital efficiency with zero slippage.
-- **Self-Mint Recovery:** In the event of network congestion or relayer delays, users retain full control to manually complete the mint on the destination chain using ArcFun's built-in Recovery tool.
-- **Unified Fee Estimation:** Displays estimated network execution fees upfront in transparent values.
+Every cross-chain transfer via ArcFun follows a deterministic 8-step protocol:
+
+1. **Pre-Flight Validation & Allowance:** The interface checks wallet balances, destination network status, and queries the user's ERC-20 / SPL allowance. If needed, a single-transaction allowance approval is signed.
+2. **On-Chain Burn Execution:** The user initiates the burn. On EVM, this calls \`depositForBurn()\` on the local TokenMessenger; on Solana, it executes \`deposit_for_burn\` against the official Circle CCTP program (\`CCTPmbSD7gX1bxKPAmg77w8oFzNFpaQiQUWD43TKaecd\`).
+3. **Receipt & Nonce Extraction:** The transaction confirms on the source blockchain. ArcFun extracts the emitted \`MessageSent\` event containing the raw payload, nonce, source domain, and destination domain.
+4. **Circle Iris Attestation Polling:** ArcFun relays the message hash to Circle's official Iris Attestation API (\`https://iris-api.circle.com/v1/attestations/{messageHash}\`), polling until cryptographic consensus is reached.
+5. **Consensus Signature Verification:** Circle's attestation service returns a Schnorr/ECDSA cryptographic signature proving that the native USDC was permanently destroyed on the source network.
+6. **Relayer Auto-Claim Dispatch:** The ArcFun backend relayer automatically picks up the attestation and prepares the destination execution payload, paying gas on behalf of the user.
+7. **Destination Mint Execution:** The destination TokenMessenger verifies Circle's attestation signature and mints genuine native USDC directly to the recipient address. On Solana, if the recipient USDC ATA does not exist, it is created automatically.
+8. **Ledger Reconciliation & UI Update:** The transaction status is updated to \`COMPLETE\` in the ArcFun ledger, and UI balances refresh in real time.
+
+---
+
+### Circle CCTP V2 Architecture
+
+Traditional bridges lock tokens in a smart contract and mint wrapped or synthetic representations on another chain. If the bridge pool is compromised, the wrapped tokens become worthless.
+
+ArcFun uses **Circle CCTP V2**:
+- **Zero Slippage:** 1:1 cross-chain capital efficiency with zero slippage or market impact.
+- **Genuine Native USDC:** Destination mints real, native USDC minted directly by Circle's contracts.
+- **Permissionless Settlement:** Anyone with the valid attestation signature can finalize the mint.
+
+---
+
+### Burn-and-Mint Security & Self-Claim Recovery
+
+ArcFun is non-custodial and resilient against infrastructure disruptions:
+- **Relayer Independence:** In the event of backend relayer delays or gas price spikes, users retain 100% control to manually finalize the claim using the built-in **/recover** tool or ArcFun UI claim button.
+- **Duplicate Claim Protection:** Circle's smart contracts maintain an immutable nonce bitmap. Any attempt to replay or claim an attestation twice is rejected at the protocol level.
+- **Atomic State Guarantee:** Because tokens are burned on the source, your funds cannot be double-spent or lost in transit.
+`
+  },
+  {
+    id: 'cctp-multichain-registry',
+    title: 'Mainnet CCTP Chain Registry',
+    badge: 'Registry',
+    category: 'Circle CCTP Bridge',
+    breadcrumbs: ['Circle CCTP Bridge', 'Chains', 'Authoritative Registry'],
+    summary: 'Complete authoritative directory of supported Mainnet EVM and Solana networks, CCTP domains, and contract addresses.',
+    subsections: [
+      { id: 'mainnet-registry-table', title: 'Mainnet Network & Contract Directory' },
+      { id: 'solana-mainnet-specs', title: 'Solana Mainnet Specifications' },
+      { id: 'testnet-registry-table', title: 'Developer Testnet Directory' }
+    ],
+    content: `
+### Mainnet Network & Contract Directory
+
+ArcFun connects to official Circle CCTP V2 deployments across the following production networks:
+
+| Network | Chain ID | CCTP Domain | Native USDC Address | TokenMessenger Contract |
+| :--- | :--- | :--- | :--- | :--- |
+| **Arc Mainnet** | \`5042\` | \`26\` | \`0x369527A13488ee2E089b2c3c6fD03914a1c5d909\` | \`0xbd3fa81b58ba92d82136038b25adec7066af3155\` |
+| **Base** | \`8453\` | \`6\` | \`0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913\` | \`0x1682Ae6375C4E4A97e4B583BC394c861A46D8962\` |
+| **Ethereum** | \`1\` | \`0\` | \`0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48\` | \`0xbd3fa81b58ba92d82136038b25adec7066af3155\` |
+| **Arbitrum One** | \`42161\` | \`3\` | \`0xaf88d065e77c8cC2239327C5EDb3A432268e5831\` | \`0x19330d52D9F3F6b1a7d18B8476F8bE51648937eF\` |
+| **OP Mainnet** | \`10\` | \`2\` | \`0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85\` | \`0x2B4069517957735bE00ceE0fadAE88a26365528f\` |
+| **Polygon PoS** | \`137\` | \`7\` | \`0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359\` | \`0x9daF8c91AEbae50b9c0E6808D41849104f697472\` |
+| **Avalanche** | \`43114\` | \`1\` | \`0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E\` | \`0x6B25532e1060CE10cc3B0A99e5683b91BFDe6982\` |
+| **Sonic** | \`146\` | \`13\` | \`0x29219dd400f2Bf60E5a23d13Be72B486D4038894\` | \`0x19330d52D9F3F6b1a7d18B8476F8bE51648937eF\` |
+| **Ink** | \`57073\` | \`23\` | \`0x29219dd400f2Bf60E5a23d13Be72B486D4038894\` | \`0x19330d52D9F3F6b1a7d18B8476F8bE51648937eF\` |
+| **Unichain** | \`130\` | \`24\` | \`0x078D782b760474a361dDA0AF3839290b0EF57AD6\` | \`0x19330d52D9F3F6b1a7d18B8476F8bE51648937eF\` |
+| **Linea** | \`59144\` | \`11\` | \`0x176211869cA2b568f2A7D4EE941E073a821EE1ff\` | \`0x19330d52D9F3F6b1a7d18B8476F8bE51648937eF\` |
+| **Solana** | Mainnet | \`5\` | \`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\` | \`CCTPmbSD7gX1bxKPAmg77w8oFzNFpaQiQUWD43TKaecd\` |
+
+---
+
+### Solana Mainnet Specifications
+
+- **TokenMessengerMinterV2 Program:** \`CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe\`
+- **MessageTransmitterV2 Program:** \`CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC\`
+- **Legacy CCTP V1 Program:** \`CCTPmbSD7gX1bxKPAmg77w8oFzNFpaQiQUWD43TKaecd\`
+- **Native USDC Mint:** \`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\`
+- **Decimals:** \`6\`
+- **CCTP Domain:** \`5\`
+- **Token Program:** Official SPL Token Program (\`TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA\`)
+- **Associated Token Program:** \`ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL\`
+
+---
+
+### Developer Testnet Directory
+
+| Network | Chain ID / Environment | CCTP Domain | USDC Contract |
+| :--- | :--- | :--- | :--- |
+| **Arc Testnet** | \`5042002\` | \`26\` | \`0x369527A13488ee2E089b2c3c6fD03914a1c5d909\` |
+| **Ethereum Sepolia** | \`11155111\` | \`0\` | \`0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238\` |
+| **Solana Devnet** | Devnet | \`5\` | \`4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU\` |
+`
+  },
+  {
+    id: 'solana-mainnet-cctp',
+    title: 'Solana Mainnet CCTP V2 Architecture',
+    badge: 'Solana',
+    category: 'Circle CCTP Bridge',
+    breadcrumbs: ['Circle CCTP Bridge', 'Solana', 'Architecture'],
+    summary: 'Technical architecture for EVM to Solana and Solana to EVM cross-chain transfers using Circle CCTP V2.',
+    subsections: [
+      { id: 'solana-dual-integration', title: 'Dual Solana Wallet Support' },
+      { id: 'ata-derivation-handling', title: 'Dynamic ATA Derivation & Creation' },
+      { id: 'solana-relayer-and-recovery', title: 'Relayer Execution & Manual Fallback' },
+      { id: 'rpc-resilience', title: 'RPC Failover & Transaction Reliability' }
+    ],
+    content: `
+### Dual Solana Wallet Support
+
+ArcFun supports two independent connection modes for Solana Mainnet:
+1. **Self-Custodial Solana Wallets:** Users can connect standard browser wallets (Phantom, Solflare, Backpack) directly via the official Solana Wallet Adapter.
+2. **ArcFun Native Smart Wallets:** Users can provision an institutional Solana account managed via Circle Developer-Controlled Wallets (DCW) protected by biometric Passkeys (Face ID / Touch ID).
+
+Both modes interface with the same on-chain Circle CCTP V2 programs and benefit from automated relayer gas coverage.
+
+---
+
+### Dynamic ATA Derivation & Creation
+
+On Solana, tokens cannot be held directly by a system wallet address; they must reside in an **Associated Token Account (ATA)** derived from the owner's public key and the token mint.
+
+ArcFun handles this dynamically:
+1. **Mint Resolution:** Detects network mode (Mainnet vs Devnet) and binds to the authoritative USDC Mint (\`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v\` on Mainnet).
+2. **Off-Chain ATA Derivation:** Calculates \`findProgramAddressSync([wallet.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()], ASSOCIATED_TOKEN_PROGRAM_ID)\`.
+3. **Existence Check:** Queries the Solana RPC for account info.
+4. **Idempotent Creation:** If the destination ATA does not exist, the bridge instruction or relayer automatically prepends \`createAssociatedTokenAccountInstruction()\` before the mint claim instruction, guaranteeing that the transfer never fails due to a missing token account.
+
+---
+
+### Relayer Execution & Manual Fallback
+
+To provide a zero-friction user experience:
+- **Backend Relayer Gas Sponsorship:** ArcFun maintains a dedicated Solana relayer keypair with automated balance checks. The relayer claims the destination mint transaction and pays network execution fees.
+- **Fail-Safe Manual Claim:** If the relayer is temporarily low on SOL, rate-limited by RPCs, or network congestion causes a timeout, the user is never stuck. The ArcFun UI immediately exposes a **Claim Manually** button, allowing the user to sign and complete the destination claim directly from their own connected wallet.
+- **Dedicated Recovery Engine:** The **/recover** page allows pasting any historical bridge transaction hash to retrieve its Circle attestation and execute the destination mint on demand.
+
+---
+
+### RPC Failover & Transaction Reliability
+
+Solana RPC endpoints frequently experience traffic throttling during high network activity. ArcFun employs an active failover cluster:
+- **Primary Mainnet RPC:** High-performance dedicated RPC.
+- **Fallback Mainnet RPC:** Secondary failover node automatically engaged if the primary returns HTTP 429, 503, or slot lag.
+- **Preflight Commitment:** Bridges query \`confirmed\` status for immediate user feedback and require \`finalized\` status for attestation emission, ensuring transaction finality.
 `
   },
   {
@@ -276,6 +401,66 @@ Sending crypto to peers no longer requires asking for their address, copying it 
 On eligible transactions, ArcFun's **Fee Sponsorship Engine** sponsors destination execution fees:
 - Users pay fees natively in stablecoins (USDC/EURC) rather than requiring native gas tokens (ETH/SOL).
 - ArcFun's fee treasury automatically attests and relays the transaction to destination validators.
+`
+  },
+    {
+    id: 'anti-phishing-and-trust',
+    title: 'Trust, Safety & Anti-Phishing Guide',
+    badge: 'Trust & Safety',
+    category: 'Security & Policies',
+    breadcrumbs: ['Security & Policies', 'Trust & Safety', 'Verification Guide'],
+    summary: 'Authoritative guide to verifying official ArcFun domains, wallet security guidelines, and reporting security concerns.',
+    subsections: [
+      { id: 'official-domains-and-handles', title: 'Official ArcFun Domains & Channels' },
+      { id: 'wallet-extension-security-notes', title: 'Wallet Extension Security & Warnings' },
+      { id: 'best-practices-self-custody', title: 'Self-Custody Best Practices' },
+      { id: 'security-contact', title: 'Vulnerability Disclosure & Contact' }
+    ],
+    content: `
+### Official ArcFun Domains & Channels
+
+To protect yourself against phishing and impersonation, bookmark and verify our official channels:
+
+| Asset | Official Identifier | Verification |
+| :--- | :--- | :--- |
+| **Primary Domain** | \`https://www.thearcfun.xyz\` | Official Production Website |
+| **Apex Domain** | \`https://thearcfun.xyz\` | 301 Redirect to Primary |
+| **Official Documentation** | \`https://www.thearcfun.xyz/docs\` | Comprehensive Knowledgebase |
+| **Official GitHub** | \`https://github.com/zaxcrypto/Arc.fun\` | Open-Source Code Repository |
+| **Official Public Build** | \`https://github.com/zaxcrypto/arcfun-studiobuild\` | Public UI & Build Repository |
+| **Official X (Twitter)** | \`@ArcFunTerminal\` | Official Announcements & Community |
+| **Official Security Email** | \`supportarcfun@gmail.com\` | Security Inquiries & Appeals |
+
+> [!WARNING]
+> Never connect your wallet to any unofficial mirror, copycat domain, or link shared in unverified Telegram direct messages. ArcFun staff will never DM you first.
+
+---
+
+### Wallet Extension Security & Warnings
+
+Some modern Web3 wallet extensions (such as Phantom or browser security plugins powered by Blowfish or ScamSniffer) employ aggressive heuristic filters for newly registered domains (.xyz TLDs) or Web3 applications requesting CCTP token allowances before an official directory listing is indexed.
+
+If you encounter a security warning in Phantom:
+- **Heuristic Nature:** Scanners flag unfamiliar domains until manual security verification is completed. ArcFun is an open-source, non-custodial interface with zero drainer scripts, zero tracking pixels, and verified smart contracts.
+- **Audit Verification:** Review our complete open-source codebase on GitHub and verify contract addresses against official Circle CCTP documentation.
+- **Safe Navigation:** If you have verified the URL (\`https://www.thearcfun.xyz\`), you can safely click proceed or connect using alternative non-custodial wallets (Rabby, MetaMask, Solflare, Coinbase Wallet).
+
+---
+
+### Self-Custody Best Practices
+
+1. **Verify Token Approvals:** When bridging, inspect the allowance contract. It should strictly match the official Circle TokenMessenger address for your chain.
+2. **Review Spending Caps:** ArcFun configures exact transaction allowances rather than infinite approvals wherever possible.
+3. **Use Hardware & Passkeys:** Enable biometric Passkeys in ArcFun Native Wallet to ensure every high-value transfer requires local physical authorization (Touch ID / Face ID).
+4. **Never Export Seed Phrases:** ArcFun will never ask for your recovery phrase, password, or private key.
+
+---
+
+### Vulnerability Disclosure & Contact
+
+ArcFun is committed to platform integrity and responsible disclosure:
+- If you discover a security vulnerability or anomalous transaction behavior, contact our security team immediately at **[supportarcfun@gmail.com](mailto:supportarcfun@gmail.com)**.
+- For legitimate false-positive domain unblocking inquiries with security providers (Blowfish, Phantom, ScamSniffer), our team maintains active developer verification tickets.
 `
   },
   {

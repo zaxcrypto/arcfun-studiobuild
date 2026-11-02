@@ -108,29 +108,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <Script
-          id="error-suppression"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                window.addEventListener('error', function(event) {
-                  if (event.filename && event.filename.indexOf('chrome-extension') !== -1) {
-                    event.stopImmediatePropagation();
-                  }
-                  if (event.message && (event.message.indexOf('aptos') !== -1 || event.message.indexOf('Martian') !== -1)) {
-                    event.stopImmediatePropagation();
-                  }
-                }, true);
-                window.addEventListener('unhandledrejection', function(event) {
-                  if (event.reason && event.reason.stack && event.reason.stack.indexOf('chrome-extension') !== -1) {
-                    event.stopImmediatePropagation();
-                  }
-                }, true);
-              })();
-            `
-          }}
-        />
       </head>
       <body className="font-sans transition-colors duration-200" style={{ margin: 0, padding: 0, overflow: "hidden", width: "100%", height: "100%", background: "var(--bg)", color: "var(--text-primary)" }}>
         <Providers>

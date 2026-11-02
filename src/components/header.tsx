@@ -21,6 +21,7 @@ import {
 import { useAccount } from "wagmi";
 import { useTheme } from "next-themes";
 import { WalletDropdown, WALLET_CDN, getWalletFallbackIcon } from "./wallet-dropdown";
+import { NetworkSelectorModal, getChainIcon } from "./network-selector-modal";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useStellar } from "@/lib/stellar-provider";
 import { useSuiWallet } from "@/lib/sui-provider";
@@ -52,7 +53,7 @@ export function Header({
   onOpenAcceptableUsePolicy,
   variant = "desktop-card"
 }: HeaderProps = {}) {
-  const { isConnected, address: evmAddress, connector: activeConnector } = useAccount();
+  const { isConnected, address: evmAddress, connector: activeConnector, chain: evmChain } = useAccount();
   const { isConnected: stellarConnected, address: stellarAddress } = useStellar();
   const { isConnected: suiConnected, address: suiAddress } = useSuiWallet();
   const solanaWalletHeader = useWallet();
@@ -92,6 +93,11 @@ export function Header({
   // Slide-over wallet drawer state
   const [walletOpen, setWalletOpen] = useState(false);
   const walletBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Custom network selector modal state
+  const [networkModalOpen, setNetworkModalOpen] = useState(false);
+  const networkBtnRef = useRef<HTMLButtonElement>(null);
+  const mobileNetworkBtnRef = useRef<HTMLButtonElement>(null);
 
   const { resolvedTheme, setTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -391,15 +397,17 @@ export function Header({
                 return (
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     {/* Mobile Network Selector */}
-                    {connected && !chain?.unsupported && (
+                    {connected && (
                       <button
-                        onClick={openChainModal}
+                        ref={mobileNetworkBtnRef}
+                        onClick={() => setNetworkModalOpen(true)}
                         style={{
                           height: 32,
                           padding: "0 8px",
                           borderRadius: 99,
-                          background: "var(--surface)",
-                          border: "1px solid var(--border)",
+                          background: chain?.unsupported ? "rgba(239, 68, 68, 0.12)" : "var(--surface)",
+                          border: chain?.unsupported ? "1px solid rgba(239, 68, 68, 0.35)" : "1px solid var(--border)",
+                          color: chain?.unsupported ? "#ef4444" : "var(--text-primary)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -407,13 +415,16 @@ export function Header({
                           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                         }}
                         type="button"
-                        title={chain.name ?? "Network"}
+                        title={chain?.unsupported ? "Wrong Network" : (chain.name ?? "Network")}
                       >
-                        {chain.hasIcon && chain.iconUrl && (
+                        {chain?.unsupported ? (
+                          <AlertTriangle size={15} />
+                        ) : (
                           <img
                             alt={chain.name ?? "Chain icon"}
-                            src={chain.iconUrl}
-                            style={{ width: 16, height: 16, borderRadius: "50%" }}
+                            src={getChainIcon(chain.id, chain.name)}
+                            style={{ width: 16, height: 16, borderRadius: "50%", objectFit: "cover" }}
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/globe.svg"; }}
                           />
                         )}
                       </button>
@@ -588,7 +599,8 @@ export function Header({
                   {/* Network selection pill (Network name and logo) */}
                   {connected && chain?.unsupported && (
                     <button
-                      onClick={openChainModal}
+                      ref={networkBtnRef}
+                      onClick={() => setNetworkModalOpen(true)}
                       style={{
                         height: 42,
                         padding: "0 14px",
@@ -614,7 +626,8 @@ export function Header({
 
                   {connected && !chain?.unsupported && (
                     <button
-                      onClick={openChainModal}
+                      ref={networkBtnRef}
+                      onClick={() => setNetworkModalOpen(true)}
                       style={{
                         height: 42,
                         padding: "0 14px",
@@ -638,46 +651,26 @@ export function Header({
                       type="button"
                       title={chain.name ?? "Network"}
                     >
-                      {chain.hasIcon ? (
-                        <div
-                          style={{
-                            background: "transparent",
-                            width: 20,
-                            height: 20,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                          }}
-                        >
-                          {chain.iconUrl && (
-                            <img
-                              alt={chain.name ?? "Chain icon"}
-                              src={chain.iconUrl}
-                              style={{ width: 20, height: 20, objectFit: "cover" }}
-                            />
-                          )}
-                        </div>
-                      ) : (
-                        <div
-                          style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: "50%",
-                            background: "var(--surface-soft, rgba(0,0,0,0.06))",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "var(--text-muted)",
-                          }}
-                        >
-                          {chain.name?.charAt(0) ?? "?"}
-                        </div>
-                      )}
+                      <div
+                        style={{
+                          background: "transparent",
+                          width: 20,
+                          height: 20,
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <img
+                          alt={chain.name ?? "Chain icon"}
+                          src={getChainIcon(chain.id, chain.name)}
+                          style={{ width: 20, height: 20, objectFit: "cover" }}
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/globe.svg"; }}
+                        />
+                      </div>
                       <span className="hidden sm:inline font-medium">{chain.name}</span>
                     </button>
                   )}
@@ -805,6 +798,14 @@ export function Header({
         ensAvatar={ensAvatar || (ensName ? `https://euc.li/${ensName}` : null)}
         admin={admin}
         onAdminClick={onAdminClick}
+      />
+
+      {/* Sleek Curved Network Selector Dropdown/Modal */}
+      <NetworkSelectorModal
+        isOpen={networkModalOpen}
+        onClose={() => setNetworkModalOpen(false)}
+        anchorRef={networkBtnRef.current ? networkBtnRef : mobileNetworkBtnRef}
+        isUnsupported={Boolean((evmChain as any)?.unsupported)}
       />
     </>
   );

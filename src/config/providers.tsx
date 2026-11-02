@@ -3,7 +3,7 @@
 import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, createConfig, http, fallback, useSwitchChain, useAccount } from "wagmi";
-import { RainbowKitProvider, getDefaultConfig, darkTheme } from "@rainbow-me/rainbowkit";
+import { RainbowKitProvider, getDefaultConfig, darkTheme, lightTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 import { ThemeProvider } from "next-themes";
 import { useTheme } from "next-themes";
@@ -233,19 +233,27 @@ if (baseDataSuffix) {
   (mainnetConfig as any).dataSuffix = baseDataSuffix;
 }
 
-// Inject chain icon overrides that RainbowKit picks up at runtime
-// These must be done after config creation as RainbowKit reads iconUrl from the chain object
+// Inject chain icon overrides that RainbowKit reads from the chain object
 [testnetConfig, mainnetConfig].forEach(cfg => {
   (cfg.chains as any[]).forEach((chain: any) => {
-    if (chain.id === 14601) chain.iconUrl = "/icons/sonic.png";
-    if (chain.id === 11155420) chain.iconUrl = "/icons/optimism.svg";
-    if (chain.id === 1439) chain.iconUrl = "/icons/injective.png";
-    if (chain.id === 43113) chain.iconUrl = "/icons/avalanche.png";
-    if (chain.id === 998) chain.iconUrl = "/icons/hyperevm.png";
-    if (chain.id === 4663) chain.iconUrl = "/icons/robinhood.png";
-    if (chain.id === 5042) chain.iconUrl = "/arc-logo.png";
-    if (chain.id === 8453) chain.iconUrl = "/icons/base.svg";
-    if (chain.id === 1952) chain.iconUrl = "/icons/xlayer.png";
+    const id = chain.id;
+    const name = (chain.name || "").toLowerCase();
+    if (id === 146 || id === 14601 || id === 57054 || name.includes("sonic")) chain.iconUrl = "/icons/sonic.png";
+    else if (id === 5042 || id === 5042002 || name.includes("arc")) chain.iconUrl = "/arc-logo.png";
+    else if (id === 8453 || id === 84532 || name.includes("base")) chain.iconUrl = "/icons/base.svg";
+    else if (id === 42161 || id === 421614 || name.includes("arbitrum")) chain.iconUrl = "/icons/arbitrum.svg";
+    else if (id === 1 || id === 11155111 || name.includes("ethereum") || name.includes("sepolia")) chain.iconUrl = "/icons/ethereum.svg";
+    else if (id === 10 || id === 11155420 || name.includes("optimism") || name.includes("op mainnet")) chain.iconUrl = "/icons/optimism.svg";
+    else if (id === 137 || id === 80002 || name.includes("polygon")) chain.iconUrl = "/icons/polygon.png";
+    else if (id === 43114 || id === 43113 || name.includes("avalanche")) chain.iconUrl = "/icons/avalanche.png";
+    else if (id === 57073 || id === 763373 || name.includes("ink")) chain.iconUrl = "/icons/ink.svg";
+    else if (id === 130 || id === 1301 || name.includes("unichain")) chain.iconUrl = "/icons/unichain.svg";
+    else if (id === 59144 || id === 59141 || name.includes("linea")) chain.iconUrl = "/icons/linea.svg";
+    else if (id === 10143 || name.includes("monad")) chain.iconUrl = "/icons/monad.svg";
+    else if (id === 1439 || name.includes("injective")) chain.iconUrl = "/icons/injective.png";
+    else if (id === 998 || name.includes("hyperevm")) chain.iconUrl = "/icons/hyperevm.png";
+    else if (id === 4663 || name.includes("robinhood")) chain.iconUrl = "/icons/robinhood.png";
+    else if (id === 1952 || name.includes("xlayer")) chain.iconUrl = "/icons/xlayer.png";
   });
 });
 
@@ -271,11 +279,17 @@ const queryClient = new QueryClient({
 
 function RainbowKitWrapper({ children }: { children: React.ReactNode }) {
   const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   return (
     <RainbowKitProvider
-      theme={darkTheme({
-        accentColor: '#b30000',
+      theme={isDark ? darkTheme({
+        accentColor: '#3b82f6',
+        accentColorForeground: 'white',
+        borderRadius: 'large',
+        overlayBlur: 'small',
+      }) : lightTheme({
+        accentColor: '#2563eb',
         accentColorForeground: 'white',
         borderRadius: 'large',
         overlayBlur: 'small',
