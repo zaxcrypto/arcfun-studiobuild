@@ -94,7 +94,7 @@ export function SwapBridgeSkeleton({ sidebarCollapsed: propCollapsed }: SwapBrid
       </div>
 
       {/* ── Main Bridge Workspace (2-Column >1150px, stacked <1150px) ── */}
-      <div className="w-full max-w-[1440px] flex flex-col min-[1150px]:flex-row items-start justify-start gap-8 min-[1150px]:gap-12">
+      <div className="bridge-desktop-workspace w-full max-w-[1440px] flex flex-col min-[1150px]:flex-row items-start justify-start gap-8 min-[1150px]:gap-12">
         {/* LEFT: Bridge Card & Details Skeleton */}
         <div
           className="swap-card-wrapper"
