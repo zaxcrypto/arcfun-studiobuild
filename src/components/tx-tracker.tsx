@@ -949,21 +949,27 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                     <button
                       onClick={onRetry}
                       style={{
-                        padding: "8px 14px",
+                        padding: "8px 16px",
                         fontSize: 12,
                         fontWeight: 600,
-                        color: "var(--surface)",
-                        background: "var(--text-primary)",
-                        border: "none",
-                        borderRadius: 8,
+                        color: "var(--text-primary)",
+                        background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
+                        border: "1px solid var(--border)",
+                        borderRadius: 20,
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                         transition: "all 0.2s",
                         whiteSpace: "nowrap",
                         flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
                       }}
                     >
                       <RefreshCw size={13} />
@@ -974,13 +980,13 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                     <button
                       onClick={onViewHistory}
                       style={{
-                        padding: "8px 14px",
+                        padding: "8px 16px",
                         fontSize: 12,
                         fontWeight: 600,
                         color: "var(--text-primary)",
                         background: "transparent",
                         border: "1px solid var(--border-soft)",
-                        borderRadius: 8,
+                        borderRadius: 20,
                         cursor: "pointer",
                         transition: "all 0.2s",
                         whiteSpace: "nowrap",
@@ -993,13 +999,13 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                   <button
                     onClick={handleDismiss}
                     style={{
-                      padding: "8px 14px",
+                      padding: "8px 16px",
                       fontSize: 12,
                       fontWeight: 600,
                       color: "var(--text-muted)",
                       background: "transparent",
                       border: "1px solid transparent",
-                      borderRadius: 8,
+                      borderRadius: 20,
                       cursor: "pointer",
                       transition: "all 0.2s",
                       whiteSpace: "nowrap",
@@ -1073,17 +1079,23 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                         padding: "0 16px",
                         fontSize: 12.5,
                         fontWeight: 600,
-                        color: "var(--surface)",
-                        background: "var(--text-primary)",
-                        border: "none",
-                        borderRadius: 8,
+                        color: "var(--text-primary)",
+                        background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
+                        border: "1px solid var(--border)",
+                        borderRadius: 20,
                         cursor: "pointer",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         gap: 6,
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                         transition: "all 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
                       }}
                     >
                       <RefreshCw size={13} />
@@ -1101,7 +1113,7 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                       color: "var(--text-primary)",
                       background: "transparent",
                       border: "1px solid var(--border-soft)",
-                      borderRadius: 8,
+                      borderRadius: 20,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
