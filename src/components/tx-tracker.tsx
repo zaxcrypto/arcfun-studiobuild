@@ -872,19 +872,29 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
             {/* ── Failure reason ──────────────────────────────────────────── */}
             {isFailed && error && (
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span
-                    style={{
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "var(--text-primary)",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Reason
-                  </span>
-                  {error && (
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "var(--bg-secondary, rgba(0, 0, 0, 0.03))",
+                    border: "1px solid var(--border-soft)",
+                    borderRadius: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 700,
+                        color: "var(--text-muted)",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Reason
+                    </span>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(error);
@@ -907,22 +917,22 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                     >
                       <Copy size={12} />
                     </button>
-                  )}
-                </div>
+                  </div>
 
-                <p
-                  style={{
-                    margin: 0,
-                    width: "100%",
-                    fontSize: 12.5,
-                    fontWeight: 500,
-                    color: "#dc2626",
-                    lineHeight: 1.45,
-                    wordBreak: "break-word",
-                  }}
-                >
-                  {error}
-                </p>
+                  <p
+                    style={{
+                      margin: 0,
+                      width: "100%",
+                      fontSize: 12.5,
+                      fontWeight: 500,
+                      color: "#dc2626",
+                      lineHeight: 1.45,
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {error}
+                  </p>
+                </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: 14, flexWrap: "nowrap", width: "100%", paddingTop: 2 }}>
                   {burnHash && onManualClaim ? (
@@ -1228,13 +1238,23 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
             {/* ── Mint Rejected Notice ───────────────────────────────────── */}
             {isMintRejected && (
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div
+                  style={{
+                    padding: "10px 14px",
+                    background: "var(--bg-secondary, rgba(0, 0, 0, 0.03))",
+                    border: "1px solid var(--border-soft)",
+                    borderRadius: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <span
                       style={{
                         fontSize: 11,
                         fontWeight: 700,
-                        color: "var(--text-primary)",
+                        color: "var(--text-muted)",
                         textTransform: "uppercase",
                         letterSpacing: "0.06em",
                       }}
@@ -1292,7 +1312,7 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                       color: "var(--text-primary)",
                       background: "transparent",
                       border: "1px solid var(--border-soft)",
-                      borderRadius: 8,
+                      borderRadius: 20,
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
@@ -1308,7 +1328,7 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                       color: "var(--text-muted)",
                       background: "transparent",
                       border: "1px solid transparent",
-                      borderRadius: 8,
+                      borderRadius: 20,
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
