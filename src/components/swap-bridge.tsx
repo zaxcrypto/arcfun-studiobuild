@@ -1225,6 +1225,44 @@ export function SwapBridgeManager({
     }
   }, [txEngine.state, refetchBalance]);
 
+  // Dynamic Gas Buffer calculation specifically for Arc (Mainnet & Testnet)
+  // On Arc, USDC is the native gas fee token. All other chains pay gas in their own native asset (ETH, SOL, etc.).
+  const [arcGasBuffer, setArcGasBuffer] = useState<number>(0.05);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const fetchArcGas = async () => {
+      const isArc = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
+      if (!isArc) return;
+
+      try {
+        const rpc = bridgeFromChain === "Arc Mainnet"
+          ? (process.env.NEXT_PUBLIC_ARC_MAINNET_RPC_URL || "https://arc-mainnet.g.alchemy.com/v2/Vt9_fvDipTI7hEZdMc950")
+          : (process.env.NEXT_PUBLIC_ARC_TESTNET_RPC_URL || "https://5042002.rpc.thirdweb.com");
+
+        const client = createPublicClient({ transport: http(rpc) });
+        const gasPrice = await client.getGasPrice();
+        // 250,000 gas limit for burn + approval + 20% safety margin
+        const dynamicGasCost = (gasPrice * 250000n * 12n) / 10n;
+        const dynamicUsdc = Number(dynamicGasCost) / 1e18; // Arc native currency has 18 decimals
+        // Use at least 0.05 USDC, or the real dynamic gas cost if higher
+        const calculatedBuffer = Math.max(0.05, dynamicUsdc);
+        if (!isCancelled) {
+          setArcGasBuffer(Math.round(calculatedBuffer * 10000) / 10000);
+        }
+      } catch (e) {
+        if (!isCancelled) setArcGasBuffer(0.05);
+      }
+    };
+
+    fetchArcGas();
+    const interval = setInterval(fetchArcGas, 20000);
+    return () => {
+      isCancelled = true;
+      clearInterval(interval);
+    };
+  }, [bridgeFromChain]);
+
   // Unified balance logic
   const balanceFromRaw: bigint = crossChainBal;
   const fromBalFormatted = formatUnits(crossChainBal, crossChainDecimals);
@@ -1234,15 +1272,17 @@ export function SwapBridgeManager({
   const bridgeAmountNum = Number(bridgeAmount) || 0;
   const bridgeAmountRaw = bridgeAmount ? parseUnits(bridgeAmount, decimalsFrom) : 0n;
   const handleMaxBridge = () => {
+    const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
     if (bridgeFromAsset === "cirBTC") {
       setBridgeAmount(fromBalFormatted);
-    } else {
-      const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
+    } else if (isArcNativeGas) {
+      // Arc chain: reserve minimum 0.05 USDC or real-time RPC gas fee
       const totalNum = Number(fromBalFormatted);
-      // On Arc, USDC is the native gas token. Leave a buffer (0.01 USDC) so the burn transaction does not revert due to gas fee deduction
-      const buffer = isArcNativeGas ? 0.01 : 0;
-      const safeMax = Math.max(0, Math.floor(Math.max(0, totalNum - buffer) * 10000) / 10000);
+      const safeMax = Math.max(0, Math.floor(Math.max(0, totalNum - arcGasBuffer) * 10000) / 10000);
       setBridgeAmount(safeMax.toString());
+    } else {
+      // Non-Arc chains (Base, Ethereum, etc.): Allow full balance to be bridged
+      setBridgeAmount(fromBalFormatted);
     }
     handleInputFocus();
   };
@@ -2454,12 +2494,23 @@ export function SwapBridgeManager({
                                   const totalBal = Number(fromBalFormatted);
                                   if (totalBal > 0) {
                                     const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
-                                    // Reserve 0.01 USDC gas buffer when sliding to 100% on Arc
-                                    const buffer = (isArcNativeGas && percent === 100) ? 0.01 : 0;
-                                    const usableBal = Math.max(0, totalBal - buffer);
-                                    const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
-                                    let val = Math.floor(usableBal * (percent / 100) * precision) / precision;
-                                    setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                    if (isArcNativeGas) {
+                                      // On Arc: reserve dynamic gas buffer (min 0.05 USDC or real-time RPC gas fee)
+                                      const buffer = percent === 100 ? arcGasBuffer : 0;
+                                      const usableBal = Math.max(0, totalBal - buffer);
+                                      const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
+                                      let val = Math.floor(usableBal * (percent / 100) * precision) / precision;
+                                      setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                    } else {
+                                      // Non-Arc chains: Allow 100% full balance without deducting any buffer
+                                      if (percent === 100) {
+                                        setBridgeAmount(fromBalFormatted);
+                                      } else {
+                                        const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
+                                        let val = Math.floor(totalBal * (percent / 100) * precision) / precision;
+                                        setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                      }
+                                    }
                                     if (txEngine.state === "failed" || txEngine.state === "success") {
                                       txEngine.dismiss();
                                       txTrackerRef.current?.dismiss();
