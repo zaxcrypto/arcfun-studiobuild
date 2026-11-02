@@ -710,7 +710,6 @@ export function LegalPageShell({
             </div>
             {LEGAL_NAV_ITEMS.map((item) => {
               const isActive = activeDoc === item.id;
-              const ItemIcon = item.icon;
               return (
                 <a
                   key={item.href}
@@ -733,7 +732,6 @@ export function LegalPageShell({
                   }}
                   className={!isActive ? "hover:bg-white/5 hover:text-white" : ""}
                 >
-                  <ItemIcon size={15} color={isActive ? "#ffffff" : "rgba(255, 255, 255, 0.38)"} />
                   <span>{item.name}</span>
                 </a>
               );
@@ -760,21 +758,7 @@ export function LegalPageShell({
         >
           {/* Header Banner */}
           <div style={{ paddingBottom: 28, borderBottom: "1px solid rgba(255, 255, 255, 0.08)", marginBottom: 32 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <ActivePageIcon size={20} color="#ffffff" />
-              </div>
+            <div style={{ marginBottom: 16 }}>
               <div>
                 <div style={{ display: "inline-block", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255, 255, 255, 0.45)", marginBottom: 3 }}>
                   ArcFun Protocol Policy

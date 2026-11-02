@@ -35,9 +35,7 @@ export function RiskDisclosureModal({ isOpen, onClose }: RiskDisclosureModalProp
               {/* Header */}
               <div style={{ padding: "22px 28px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <AlertTriangle size={17} color="#ffffff" />
-                  </div>
+                  
                   <div>
                     <h1 style={{ fontSize: 17, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>Risk Disclosure</h1>
                     <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: November 2026 | Last Updated: November 2026</p>
