@@ -1276,13 +1276,18 @@ export function SwapBridgeManager({
     if (bridgeFromAsset === "cirBTC") {
       setBridgeAmount(fromBalFormatted);
     } else if (isArcNativeGas) {
-      // Arc chain: reserve minimum 0.05 USDC or real-time RPC gas fee
+      // Arc chain: reserve dynamic gas buffer (min 0.05 USDC or real-time RPC gas fee)
       const totalNum = Number(fromBalFormatted);
       const safeMax = Math.max(0, Math.floor(Math.max(0, totalNum - arcGasBuffer) * 10000) / 10000);
       setBridgeAmount(safeMax.toString());
     } else {
-      // Non-Arc chains (Base, Ethereum, etc.): Allow full balance to be bridged
-      setBridgeAmount(fromBalFormatted);
+      // Non-Arc chains (Base, Ethereum, etc.): Allow full balance to be bridged cleanly
+      const totalNum = Number(fromBalFormatted);
+      let cleanAmount = fromBalFormatted;
+      if (Math.abs(totalNum - Math.round(totalNum)) < 0.00005) {
+        cleanAmount = Math.round(totalNum).toString();
+      }
+      setBridgeAmount(cleanAmount);
     }
     handleInputFocus();
   };
@@ -2478,9 +2483,20 @@ export function SwapBridgeManager({
 
                         {/* Percentage Slider */}
                         {(() => {
-                          const sliderPercent = Number(fromBalFormatted) > 0
-                            ? Math.min(100, Math.max(0, Math.round((Number(bridgeAmount) / Number(fromBalFormatted)) * 100)))
-                            : 0;
+                          const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
+                          const totalBal = Number(fromBalFormatted);
+                          // For Arc, the max bridgeable pool is (total - arcGasBuffer).
+                          // For other chains, the max bridgeable pool is totalBal.
+                          const maxUsableBal = isArcNativeGas
+                            ? Math.max(0, Math.floor(Math.max(0, totalBal - arcGasBuffer) * 10000) / 10000)
+                            : totalBal;
+
+                          const currentAmt = Number(bridgeAmount);
+                          let sliderPercent = 0;
+                          if (maxUsableBal > 0 && currentAmt > 0) {
+                            sliderPercent = Math.min(100, Math.max(0, Math.round((currentAmt / maxUsableBal) * 100)));
+                          }
+
                           return (
                             <div style={{ margin: "14px 6px 4px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 }}>
                               <input
@@ -2491,20 +2507,24 @@ export function SwapBridgeManager({
                                 value={sliderPercent}
                                 onChange={(e) => {
                                   const percent = Number(e.target.value);
-                                  const totalBal = Number(fromBalFormatted);
                                   if (totalBal > 0) {
-                                    const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
                                     if (isArcNativeGas) {
                                       // On Arc: reserve dynamic gas buffer (min 0.05 USDC or real-time RPC gas fee)
-                                      const buffer = percent === 100 ? arcGasBuffer : 0;
-                                      const usableBal = Math.max(0, totalBal - buffer);
-                                      const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
-                                      let val = Math.floor(usableBal * (percent / 100) * precision) / precision;
-                                      setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                      if (percent === 100) {
+                                        setBridgeAmount(maxUsableBal.toString());
+                                      } else {
+                                        const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
+                                        let val = Math.floor(maxUsableBal * (percent / 100) * precision) / precision;
+                                        setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
+                                      }
                                     } else {
                                       // Non-Arc chains: Allow 100% full balance without deducting any buffer
                                       if (percent === 100) {
-                                        setBridgeAmount(fromBalFormatted);
+                                        let cleanAmount = fromBalFormatted;
+                                        if (Math.abs(totalBal - Math.round(totalBal)) < 0.00005) {
+                                          cleanAmount = Math.round(totalBal).toString();
+                                        }
+                                        setBridgeAmount(cleanAmount);
                                       } else {
                                         const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
                                         let val = Math.floor(totalBal * (percent / 100) * precision) / precision;
