@@ -354,6 +354,66 @@ function MilestoneNode({
           </span>
 
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {isActive && !isStepRejected && (m.id === "mint" || m.id === "claim") && isClaimManualRequired && onManualClaim && (
+              <button
+                onClick={onManualClaim}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 12px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
+                  border: "1px solid var(--border)",
+                  borderRadius: 9999,
+                  cursor: "pointer",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
+                }}
+              >
+                <RefreshCw size={11} />
+                <span>Claim Tokens</span>
+              </button>
+            )}
+
+            {isActive && m.id === "switch" && isClaimManualRequired && onManualClaim && (
+              <button
+                onClick={onManualClaim}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 5,
+                  padding: "4px 12px",
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  color: "var(--text-primary)",
+                  background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
+                  border: "1px solid var(--border)",
+                  borderRadius: 9999,
+                  cursor: "pointer",
+                  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
+                }}
+              >
+                <RefreshCw size={11} />
+                <span>Switch Network</span>
+              </button>
+            )}
+
             {isStepRejected && onManualClaim && (
               <button
                 onClick={onManualClaim}
@@ -404,59 +464,6 @@ function MilestoneNode({
         {showMint && mintHash && (
           <div style={{ marginTop: 7 }}>
             <TxHashChip label="Mint Tx" hash={mintHash} explorerUrl={mintExplorerUrl} />
-          </div>
-        )}
-
-        {/* Interactive action buttons directly on active steps (only when user action required) */}
-        {isActive && m.id === "switch" && isClaimManualRequired && onManualClaim && (
-          <div style={{ marginTop: 8 }}>
-            <button
-              onClick={onManualClaim}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
-                border: "1px solid var(--border)",
-                borderRadius: 9999,
-                cursor: "pointer",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <RefreshCw size={11} />
-              <span>Switch Network</span>
-            </button>
-          </div>
-        )}
-
-        {isActive && !isStepRejected && (m.id === "mint" || m.id === "claim") && isClaimManualRequired && onManualClaim && (
-          <div style={{ marginTop: 8 }}>
-            <button
-              onClick={onManualClaim}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 15px",
-                fontSize: 12,
-                fontWeight: 600,
-                color: "var(--text-primary)",
-                background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
-                border: "1px solid var(--border)",
-                borderRadius: 9999,
-                cursor: "pointer",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <RefreshCw size={11} />
-              <span>Claim Tokens</span>
-            </button>
           </div>
         )}
       </div>
@@ -1161,16 +1168,16 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                   <div
                     style={{
                       padding: "10px 14px",
-                      background: "rgba(59, 130, 246, 0.08)",
-                      border: "1px solid rgba(59, 130, 246, 0.2)",
-                      borderRadius: 10,
+                      background: "var(--bg-secondary, rgba(0, 0, 0, 0.03))",
+                      border: "1px solid var(--border-soft)",
+                      borderRadius: 12,
                       display: "flex",
                       flexDirection: "column",
                       gap: 4,
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: "#3b82f6", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                         Claim Notice
                       </span>
                       <button
