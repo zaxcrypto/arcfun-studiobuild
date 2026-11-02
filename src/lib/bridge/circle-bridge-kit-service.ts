@@ -92,12 +92,15 @@ export class CircleBridgeKitService {
       },
       getPublicClient: ({ chain }: any) => {
         if (chain.id === 5042 || chain.chain === "Arc" || chain.name === "Arc") {
-          const arcRpc = process.env.NEXT_PUBLIC_ARC_MAINNET_RPC_URL || process.env.ARC_MAINNET_RPC_URL || "https://rpc.mainnet.arc.io/";
+          const arcRpc = process.env.NEXT_PUBLIC_ARC_MAINNET_RPC_URL || process.env.ARC_MAINNET_RPC_URL || "https://arc-mainnet.g.alchemy.com/v2/Vt9_fvDipTI7hEZdMc950";
+          const proxyRpc = typeof window !== "undefined" ? `${window.location.origin}/api/rpc/arc` : "/api/rpc/arc";
           return createPublicClient({
             chain,
             transport: fallback([
-              http(arcRpc, { retryCount: 3, retryDelay: 1000 }),
-              http("https://rpc.mainnet.arc.io/", { retryCount: 3, retryDelay: 1000 })
+              http(proxyRpc, { retryCount: 2, retryDelay: 500 }),
+              http(arcRpc, { retryCount: 2, retryDelay: 1000 }),
+              http("https://arc-mainnet.g.alchemy.com/v2/Vt9_fvDipTI7hEZdMc950", { retryCount: 2, retryDelay: 1000 }),
+              http("https://rpc.mainnet.arc.io/", { retryCount: 2, retryDelay: 1000 })
             ])
           }) as any;
         }
