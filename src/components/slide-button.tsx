@@ -43,19 +43,23 @@ export function SlideButton({
     };
   }, []);
 
-  // Reset slider thumb to left only when an operation ends (loading becomes false) or button is disabled
+  const [isSlidToEnd, setIsSlidToEnd] = useState(false);
+
+  // Reset slider thumb to left only when an operation ends (loading becomes false) and user hasn't slid to end
   useEffect(() => {
     if (!loading && !disabled) {
+      setIsSlidToEnd(false);
       animate(x, 0, { type: "spring", stiffness: 400, damping: 30 });
     }
   }, [loading, disabled, x]);
 
   const handleDragEnd = () => {
-    if (disabled || loading) return;
+    if (disabled || loading || isSlidToEnd) return;
     
     const currentX = x.get();
-    // If user dragged past 50% threshold: snap to end and execute instantly
+    // If user dragged past 50% threshold: snap to end, lock state, and execute
     if (currentX > dragLimit * 0.5) {
+      setIsSlidToEnd(true);
       animate(x, dragLimit, {
         type: "tween",
         ease: "easeOut",

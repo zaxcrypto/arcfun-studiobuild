@@ -203,13 +203,55 @@ export class CircleBridgeKitService {
     const atomicAmount = BigInt(Math.round(parseFloat(req.amount) * 1_000_000)).toString();
 
     // 2. Prepare & Execute Approval
-    req.onProgress?.("APPROVING", { chain: req.sourceChain });
-    const approveAction = await (provider as any).approve(sourceContext, atomicAmount);
-    if (approveAction && approveAction.type !== "noop") {
-      const approveTxHash = await approveAction.execute();
-      req.onProgress?.("APPROVE_CONFIRMED", { txHash: approveTxHash });
-      await adapter.waitForTransaction(approveTxHash as `0x${string}`, undefined, sourceChain as any);
+    // Check existing on-chain allowance first to avoid redundant wallet prompts
+    const publicClient = await adapter.getPublicClient(sourceChain as any);
+    const usdcAddress = (sourceChain as any).usdcAddress;
+    const targetSpender = ((sourceChain as any).kitContracts?.bridge || "0xB3FA262d0fB521cc93bE83d87b322b8A23DAf3F0") as `0x${string}`;
+
+    let currentAllowance = 0n;
+    try {
+      currentAllowance = await publicClient.readContract({
+        address: usdcAddress,
+        abi: [{
+          type: "function",
+          name: "allowance",
+          inputs: [
+            { name: "owner", type: "address" },
+            { name: "spender", type: "address" }
+          ],
+          outputs: [{ name: "", type: "uint256" }],
+          stateMutability: "view"
+        }],
+        functionName: "allowance",
+        args: [userAddress as `0x${string}`, targetSpender]
+      }) as bigint;
+      console.log(`[CircleBridgeKit] Current allowance for ${targetSpender}:`, currentAllowance.toString(), `Required:`, atomicAmount);
+    } catch (allowanceErr) {
+      console.warn("[CircleBridgeKit] Could not read live allowance, proceeding with standard check:", allowanceErr);
+    }
+
+    if (currentAllowance < BigInt(atomicAmount)) {
+      req.onProgress?.("APPROVING", { chain: req.sourceChain });
+      const approveAction = await adapter.prepareAction(
+        "usdc.increaseAllowance",
+        {
+          amount: BigInt(atomicAmount),
+          delegate: targetSpender,
+          chain: sourceChain as any
+        },
+        sourceContext
+      );
+
+      if (approveAction && approveAction.type !== "noop") {
+        const approveTxHash = await approveAction.execute();
+        console.log(`[CircleBridgeKit] Approve tx submitted:`, approveTxHash);
+        req.onProgress?.("APPROVE_CONFIRMED", { txHash: approveTxHash });
+        await adapter.waitForTransaction(approveTxHash as `0x${string}`, undefined, sourceChain as any);
+      } else {
+        req.onProgress?.("APPROVE_CONFIRMED", { txHash: "0x0" });
+      }
     } else {
+      console.log(`[CircleBridgeKit] Allowance already sufficient (${currentAllowance.toString()} >= ${atomicAmount}). Skipping approve prompt.`);
       req.onProgress?.("APPROVE_CONFIRMED", { txHash: "0x0" });
     }
 
