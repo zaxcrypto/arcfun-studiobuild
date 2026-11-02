@@ -31,7 +31,7 @@ export default function PrivacyPage() {
 
       <LegalSection title="2. Public Blockchain Data">
         <p>
-          When you connect a wallet, fund an ArcFun Wallet, or submit transactions via ArcFun (including bridge burns/mints, token deployments, and bonding curve trades):
+          When you connect a wallet, fund an ArcFun Wallet, or submit transactions via ArcFun (including bridge burns/mints and Web3 Chat transfers):
         </p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li>Your public wallet address, transaction hash, token amounts, timestamp, and on-chain interactions are permanently recorded on public blockchain ledgers.</li>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li>Cryptographically signed session tokens used strictly to authenticate API calls to your self-service wallet features.</li>
           <li>Interface theme selection (dark mode).</li>
-          <li>Custom slippage tolerance settings for bonding curve swaps.</li>
+          <li>Custom slippage tolerance settings for cross-chain bridge transfers.</li>
           <li>Last-used wallet connector choice for convenient reconnection.</li>
         </ul>
         <p>This data stays within your browser and is never transmitted to marketing aggregators.</p>

@@ -40,7 +40,7 @@ export function RiskDisclosureModal({ isOpen, onClose }: RiskDisclosureModalProp
                   </div>
                   <div>
                     <h1 style={{ fontSize: 17, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>Risk Disclosure</h1>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: October 2026 | Last Updated: October 2026</p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: November 2026 | Last Updated: November 2026</p>
                   </div>
                 </div>
                 <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
@@ -59,7 +59,7 @@ export function RiskDisclosureModal({ isOpen, onClose }: RiskDisclosureModalProp
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", lineHeight: 1.8, margin: 0 }}>
                     By accessing or using{" "}
                     <a href="https://www.thearcfun.xyz" style={{ color: "#ffffff", textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 600 }}>https://www.thearcfun.xyz</a>,{" "}
-                    you acknowledge that cryptocurrency, decentralized finance (DeFi), cross-chain bridges, bonding curve trading, and meme tokens involve substantial financial and technical risks. You accept full responsibility for all transactions and outcomes.
+                    you acknowledge that cryptocurrency, decentralized finance (DeFi), cross-chain bridges, and decentralized smart contracts involve financial and technical risks. You accept full responsibility for all transactions and outcomes.
                   </p>
                 </div>
 
@@ -87,17 +87,13 @@ export function RiskDisclosureModal({ isOpen, onClose }: RiskDisclosureModalProp
                   <p>Cryptocurrency assets and meme tokens are speculative and subject to extreme price volatility. Token prices may crash rapidly or drop to zero. You should never trade or risk funds that you cannot afford to lose completely. There are no guaranteed returns or profits.</p>
                 </RSection>
 
-                <RSection title="4. Bonding Curve Trading Risks">
-                  <p>Tokens traded on the ArcFun Launchpad execute against mathematical bonding curves on-chain:</p>
+                <RSection title="4. Web3 Chat & Autopay Execution Risks">
+                  <p>Features that enable peer-to-peer messaging and automated recurring transfers carry specific operational considerations:</p>
                   <ul>
-                    <li><strong>Price Impact &amp; Slippage:</strong> Buying increases token price along the curve, while selling decreases it. Large orders relative to pool depth will incur substantial slippage.</li>
-                    <li><strong>Liquidity Risk:</strong> Liquidity is governed by the curve contract. There is no guarantee of continuous buy or sell demand.</li>
-                    <li><strong>Graduation Uncertainty:</strong> Reaching the funding threshold and migrating liquidity to a decentralized exchange does not guarantee future trading volume, price stability, or secondary market liquidity.</li>
+                    <li><strong>Irreversible Payments:</strong> In-chat transfers execute directly on public blockchains and cannot be recalled, stopped, or refunded once submitted.</li>
+                    <li><strong>Autopay Execution &amp; Gas:</strong> Scheduled autopay executions require sufficient token balances and network gas. If balances are depleted or gas spikes exceed limits, executions safely pause.</li>
+                    <li><strong>Social Engineering &amp; Impersonation:</strong> Malicious actors may attempt to solicit transfers via messaging. ArcFun will never message you requesting funds, seed phrases, or private keys.</li>
                   </ul>
-                </RSection>
-
-                <RSection title="5. User-Created Tokens & Scam Risks">
-                  <p>ArcFun allows permissionless token creation. ArcFun does not audit, verify, or endorse any user-launched token. Tokens may be created by anonymous third parties and could represent scams, abandoned projects, or fraudulent schemes. You are solely responsible for conducting independent due diligence on any token project.</p>
                 </RSection>
 
                 <RSection title="6. ArcFun Bridge & Circle CCTP Dependencies">
@@ -111,15 +107,6 @@ export function RiskDisclosureModal({ isOpen, onClose }: RiskDisclosureModalProp
 
                 <RSection title="7. Smart Contract & Blockchain Vulnerabilities">
                   <p>Smart contracts execute autonomously on public networks. Despite best development practices, smart contracts may be vulnerable to unforeseen bugs, mathematical flaws, compiler issues, validator reorgs, network forks, or malicious exploits. Once a transaction is finalized on-chain, it cannot be reversed by ArcFun.</p>
-                </RSection>
-
-                <RSection title="8. Tokenized Stock & Quote Asset Risks">
-                  <p>The Launchpad may support pairing tokens with tokenized real-world assets or stock tokens as quote assets:</p>
-                  <ul>
-                    <li>ArcFun is not the issuer or guarantor of any underlying stock or tokenized asset.</li>
-                    <li>A meme token paired with a tokenized stock quote asset is NOT backed by equity or company ownership.</li>
-                    <li>Tokenized assets may be subject to third-party issuer restrictions, transfer controls, redemption conditions, and regulatory actions.</li>
-                  </ul>
                 </RSection>
 
                 <RSection title="9. Regulatory & Tax Uncertainties">

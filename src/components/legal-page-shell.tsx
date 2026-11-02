@@ -43,7 +43,7 @@ const DOC_METADATA: Record<LegalDocType, { title: string; subtitle: string }> = 
   },
   risk: {
     title: "Risk Disclosure",
-    subtitle: "Please read this Risk Disclosure carefully before interacting with ArcFun software interfaces, bridges, or token launchpads.",
+    subtitle: "Please read this Risk Disclosure carefully before interacting with ArcFun cross-chain bridge interfaces, native smart wallets, or Web3 chat payments.",
   },
   cookies: {
     title: "Cookie & Storage Policy",
@@ -91,7 +91,7 @@ function RenderTermsContent() {
           <a href="https://www.thearcfun.xyz" target="_blank" rel="noopener noreferrer" style={{ color: "#ffffff", textDecoration: "underline", textUnderlineOffset: 3 }}>
             https://www.thearcfun.xyz
           </a>{" "}
-          and associated software interfaces, including the ArcFun Wallet, ArcFun Bridge, ArcFun Launchpad, token creation tools, on-chain trading features, and the /recover bridge recovery utility (collectively, the &quot;Services&quot;).
+          and associated software interfaces, including the ArcFun Wallet, ArcFun Bridge, Web3 Chat & Social Pay, and the /recover bridge recovery utility (collectively, the &quot;Services&quot;).
         </p>
         <p>
           By connecting a wallet, creating or funding an ArcFun Wallet, accessing, or using the Services, you acknowledge that you have read, understood, and unconditionally agree to be bound by these Terms. If you do not agree to these Terms in their entirety, you must not create an ArcFun Wallet, must not deposit or bridge any funds, and must immediately cease accessing the Services.
@@ -105,8 +105,7 @@ function RenderTermsContent() {
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li><strong style={{ color: "#fff" }}>ArcFun Wallet:</strong> An embedded multi-chain digital wallet interface powered by Circle Developer-Controlled Wallets (Programmable Wallets), allowing users to generate and manage addresses across supported networks (e.g. Arc, Solana, Ethereum) through Circle&apos;s cryptographic infrastructure.</li>
           <li><strong style={{ color: "#fff" }}>ArcFun Bridge &amp; Gateway:</strong> Facilitates cross-chain native USDC transfers utilizing Circle&apos;s Cross-Chain Transfer Protocol (CCTP) and Circle Gateway.</li>
-          <li><strong style={{ color: "#fff" }}>ArcFun Launchpad:</strong> Enables users to deploy new tokens governed by on-chain bonding curve smart contracts.</li>
-          <li><strong style={{ color: "#fff" }}>Bonding Curve Trading:</strong> Provides an on-chain automated market maker interface to swap supported quote assets for launched tokens.</li>
+          <li><strong style={{ color: "#fff" }}>Web3 Chat &amp; Social Pay:</strong> Decentralized wallet-to-wallet messaging interface supporting direct peer-to-peer USDC transfers, recurring autopay schedules, and social payment requests.</li>
           <li><strong style={{ color: "#fff" }}>Bridge Recovery Utility (/recover):</strong> Provides an interface allowing users to manually self-claim or resume pending cross-chain CCTP transfers using on-chain transaction data and Circle Iris attestations.</li>
         </ul>
         <p>
@@ -159,35 +158,21 @@ function RenderTermsContent() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="7. Launchpad and Token Creation">
+      <LegalSection title="7. Web3 Chat & Social Payments">
         <p>
-          The ArcFun Launchpad allows users to deploy new cryptographic tokens on-chain. Anyone can create a token without vetting by ArcFun. As a token creator, you are solely responsible for:
+          ArcFun Web3 Chat enables direct wallet-to-wallet communication and integrated cryptocurrency transfers:
         </p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>Ensuring your token complies with all securities, commodities, consumer protection, and intellectual property laws in relevant jurisdictions.</li>
-          <li>The accuracy of any name, symbol, image, description, or social link associated with the token.</li>
-          <li>Any statements, representations, or marketing you make regarding the token.</li>
-        </ul>
-        <p>ArcFun does not endorse, verify, audit, or guarantee any user-created token.</p>
-      </LegalSection>
-
-      <LegalSection title="8. Bonding Curve Trading & Quote Assets">
-        <p>Tokens launched through ArcFun trade along an algorithmic bonding curve smart contract:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>Prices increase or decrease automatically based on buy and sell volume according to immutable mathematical formulas.</li>
-          <li>Trades may incur significant slippage and price impact, especially during periods of low liquidity or high volume.</li>
-          <li>When a token meets its funding threshold, liquidity may be migrated or graduated to decentralized exchange pools according to the smart contract logic. Graduation does not guarantee continued trading volume or future liquidity.</li>
+          <li><strong style={{ color: "#fff" }}>Peer-to-Peer Transfers:</strong> In-chat payments transfer funds directly between autonomous smart contracts and user-controlled addresses. ArcFun does not intermediate, hold in escrow, or take custody of in-chat payment funds.</li>
+          <li><strong style={{ color: "#fff" }}>Autopay &amp; Recurring Payments:</strong> Users may schedule automated transfers. Autopay transactions are authorized by the user and processed subject to pre-configured spending limits and account balances.</li>
+          <li><strong style={{ color: "#fff" }}>Recipient Verification:</strong> You are solely responsible for verifying the identity, public address, and recipient credentials of any party with whom you exchange messages or initiate transfers.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="9. Tokenized Stock & External Quote Asset Disclaimer">
-        <p>The Launchpad may support pairing tokens with various quote assets, including tokenized stock assets where supported:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>A quote asset does not mean ArcFun issued the underlying stock or tokenized asset.</li>
-          <li>ArcFun does not represent that a meme token or launched token is backed by a stock merely because it utilizes a stock-related quote asset.</li>
-          <li>Users must independently verify token and quote asset contract addresses.</li>
-          <li>Availability of quote assets depends on third-party infrastructure and configuration, and tokenized assets may carry their own issuer, legal, custody, redemption, and transfer restrictions.</li>
-        </ul>
+      <LegalSection title="8. Circle Gateway & Unified Liquidity">
+        <p>
+          Where supported, ArcFun facilitates unified liquidity settlement across multiple chains powered by Circle Gateway. Users understand that settlement speed, liquidity availability, and cross-chain messaging rely upon autonomous smart contracts and Circle infrastructure.
+        </p>
       </LegalSection>
 
       <LegalSection title="10. Fees and Gas Costs">
@@ -198,7 +183,7 @@ function RenderTermsContent() {
 
       <LegalSection title="11. Transactions and Blockchain Finality">
         <p>
-          Due to the immutable nature of blockchain networks, transactions cannot be cancelled, modified, or reversed once confirmed on-chain. ArcFun does not maintain a custodial refund pool. A reverted Launchpad trade does not create an ArcFun-held user balance. While the /recover tool allows claiming eligible pending bridge transfers when protocol state permits, recovery is not a guarantee of compensation for losses caused by external network failures.
+          Due to the immutable nature of blockchain networks, transactions cannot be cancelled, modified, or reversed once confirmed on-chain. ArcFun does not maintain a custodial refund pool. A reverted cross-chain or chat transfer does not create an ArcFun-held user balance. While the /recover tool allows claiming eligible pending bridge transfers when protocol state permits, recovery is not a guarantee of compensation for losses caused by external network failures.
         </p>
       </LegalSection>
 
@@ -260,7 +245,7 @@ function RenderPrivacyContent() {
 
       <LegalSection title="2. Public Blockchain Data">
         <p>
-          When you connect a wallet, fund an ArcFun Wallet, or submit transactions via ArcFun (including bridge burns/mints, token deployments, and bonding curve trades):
+          When you connect a wallet, fund an ArcFun Wallet, or submit transactions via ArcFun (including bridge burns/mints and Web3 Chat transfers):
         </p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li>Your public wallet address, transaction hash, token amounts, timestamp, and on-chain interactions are permanently recorded on public blockchain ledgers.</li>
@@ -287,7 +272,7 @@ function RenderPrivacyContent() {
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li>Cryptographically signed session tokens used strictly to authenticate API calls to your self-service wallet features.</li>
           <li>Interface theme selection (dark mode).</li>
-          <li>Custom slippage tolerance settings for bonding curve swaps.</li>
+          <li>Custom slippage tolerance settings for cross-chain bridge transfers.</li>
           <li>Last-used wallet connector choice for convenient reconnection.</li>
         </ul>
         <p>This data stays within your browser and is never transmitted to marketing aggregators.</p>
@@ -323,7 +308,7 @@ function RenderRiskContent() {
   return (
     <>
       <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", borderRadius: 14, padding: "16px 18px", color: "rgba(255, 255, 255, 0.85)", fontSize: 13.5, lineHeight: 1.7 }}>
-        <strong style={{ color: "#ef4444" }}>CRITICAL WARNING:</strong> Interacting with cryptocurrencies, decentralized finance (DeFi), cross-chain bridges, bonding curves, and meme tokens involves extreme financial and technical risk. You may lose 100% of the funds you deploy. Never trade capital you cannot afford to lose completely.
+        <strong style={{ color: "#ef4444" }}>CRITICAL WARNING:</strong> Interacting with cryptocurrencies, decentralized finance (DeFi), cross-chain bridges, and decentralized smart contracts involves financial and technical risk. You may lose 100% of the funds you deploy. Never trade capital you cannot afford to lose completely.
       </div>
 
       <LegalSection title="1. Non-Custodial Architecture & Custody Boundaries">
@@ -356,19 +341,15 @@ function RenderRiskContent() {
         </p>
       </LegalSection>
 
-      <LegalSection title="4. Bonding Curve Trading Risks">
-        <p>Tokens traded on the ArcFun Launchpad execute against mathematical bonding curves on-chain:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Price Impact &amp; Slippage:</strong> Buying increases token price along the curve, while selling decreases it. Large orders relative to pool depth will incur substantial slippage.</li>
-          <li><strong style={{ color: "#fff" }}>Liquidity Risk:</strong> Liquidity is governed purely by the curve contract. There is no guarantee of continuous buy or sell demand.</li>
-          <li><strong style={{ color: "#fff" }}>Graduation Uncertainty:</strong> Reaching the funding threshold and migrating liquidity to a decentralized exchange does not guarantee future trading volume, price stability, or secondary market liquidity.</li>
-        </ul>
-      </LegalSection>
-
-      <LegalSection title="5. User-Created Tokens & Scam Risks">
+      <LegalSection title="4. Web3 Chat & Autopay Execution Risks">
         <p>
-          ArcFun allows permissionless token creation. ArcFun does not audit, verify, or endorse any user-launched token. Tokens may be created by anonymous third parties and could represent scams, abandoned projects, or fraudulent schemes. You are solely responsible for conducting independent due diligence on any token project before committing assets.
+          Features that enable peer-to-peer messaging and automated recurring transfers carry specific operational considerations:
         </p>
+        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+          <li><strong style={{ color: "#fff" }}>Irreversible Payments:</strong> In-chat transfers execute directly on public blockchains and cannot be recalled, stopped, or refunded by ArcFun once submitted.</li>
+          <li><strong style={{ color: "#fff" }}>Autopay Execution &amp; Gas:</strong> Scheduled autopay executions require sufficient token balances and network gas. If balances are depleted or network gas spikes exceed limits, scheduled executions will safely pause.</li>
+          <li><strong style={{ color: "#fff" }}>Social Engineering &amp; Impersonation:</strong> Malicious actors may attempt to solicit transfers via messaging. ArcFun will never message you requesting funds, seed phrases, or private keys.</li>
+        </ul>
       </LegalSection>
 
       <LegalSection title="6. ArcFun Bridge & Circle CCTP Dependencies">
@@ -386,15 +367,6 @@ function RenderRiskContent() {
         <p>
           Smart contracts execute autonomously on public networks. Despite rigorous development standards, smart contracts may contain unforeseen software bugs, mathematical edge cases, validator reorganizations, network forks, or malicious exploits. Once a transaction is confirmed on-chain, it cannot be reversed by ArcFun.
         </p>
-      </LegalSection>
-
-      <LegalSection title="8. Tokenized Stock & External Quote Asset Disclaimer">
-        <p>The Launchpad may support pairing tokens with tokenized real-world assets or stock tokens as quote assets:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>ArcFun is not the issuer or guarantor of any underlying stock or tokenized asset.</li>
-          <li>A meme token paired with a tokenized stock quote asset is NOT backed by equity or company ownership.</li>
-          <li>Tokenized assets may be subject to third-party issuer restrictions, transfer controls, redemption conditions, and regulatory actions.</li>
-        </ul>
       </LegalSection>
 
       <LegalSection title="9. No Financial or Investment Advice">
@@ -426,7 +398,7 @@ function RenderCookiesContent() {
         <p>ArcFun uses browser <code>localStorage</code> strictly for non-tracking application preferences and decentralized interface states:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li><strong style={{ color: "#fff" }}>Theme Preference:</strong> Storing your interface visual mode (dark mode).</li>
-          <li><strong style={{ color: "#fff" }}>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for bonding curve swaps.</li>
+          <li><strong style={{ color: "#fff" }}>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for cross-chain bridge transfers.</li>
           <li><strong style={{ color: "#fff" }}>ArcFun Wallet &amp; Connector State:</strong> Remembering the last active wallet provider (e.g., ArcFun Wallet, MetaMask, Phantom, Coinbase Wallet) or public wallet addresses for automatic interface reconnection.</li>
           <li><strong style={{ color: "#fff" }}>Interface State:</strong> Persisting dismissed announcement banners, cross-chain bridge transaction history, and recently viewed token filters.</li>
         </ul>
@@ -475,22 +447,21 @@ function RenderAcceptableUseContent() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="2. Fraudulent Token Creation & Scams">
-        <p>The ArcFun Launchpad allows permissionless token creation. You must NOT deploy or promote:</p>
+      <LegalSection title="2. Fraudulent Transfers & Scams">
+        <p>You must NOT use ArcFun bridge, wallet, or chat interfaces to facilitate:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Malicious Smart Contracts:</strong> Honeypots, blacklists preventing users from selling, or contracts containing hidden backdoors or drain functions.</li>
-          <li><strong style={{ color: "#fff" }}>Scams &amp; Rug Pulls:</strong> Deceptive schemes designed to mislead investors, solicit fraudulent capital, or abandon liquidity illicitly.</li>
-          <li><strong style={{ color: "#fff" }}>Impersonation:</strong> Minting tokens pretending to be officially affiliated with established corporations, public figures, third-party projects, or ArcFun without authorization.</li>
-          <li><strong style={{ color: "#fff" }}>Phishing &amp; Social Engineering:</strong> Providing misleading metadata, websites, or social links designed to compromise user credentials or wallets.</li>
+          <li><strong style={{ color: "#fff" }}>Phishing &amp; Credential Theft:</strong> Distributing malicious links, scam domains, or social engineering schemes via Web3 Chat.</li>
+          <li><strong style={{ color: "#fff" }}>Impersonation:</strong> Posing as ArcFun team members, public figures, or third-party institutions to solicit unauthorized payments.</li>
+          <li><strong style={{ color: "#fff" }}>Stolen Funds:</strong> Bridging, transferring, or laundering digital assets acquired through theft, hacks, exploits, or cyber extortion.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="3. Market Manipulation & Abusive Trading">
-        <p>You agree not to engage in manipulative trading practices on ArcFun bonding curves, including:</p>
+      <LegalSection title="3. Automated Network Abuse & Bot Flooding">
+        <p>You agree not to engage in malicious exploitation of ArcFun infrastructure, including:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Wash Trading:</strong> Executing simultaneous buy and sell orders from coordinated wallets to artificially inflate volume or activity.</li>
-          <li><strong style={{ color: "#fff" }}>Deceptive Market Practices:</strong> Engaging in spoofing, quoting false intentions, or pump-and-dump coordination.</li>
-          <li><strong style={{ color: "#fff" }}>Abusive Automated Bot Traffic:</strong> Flooding the interface or bonding curves with front-running, spamming, or denial-of-service transactions that impair network usability for legitimate participants.</li>
+          <li><strong style={{ color: "#fff" }}>Denial-of-Service Traffic:</strong> Flooding the bridge, relayer endpoints, or Web3 Chat with spam transactions that impair usability for legitimate participants.</li>
+          <li><strong style={{ color: "#fff" }}>Relayer Gas Exploitation:</strong> Attempting to drain, manipulate, or exploit sponsored gas or relayer fee mechanisms.</li>
+          <li><strong style={{ color: "#fff" }}>Security Circumvention:</strong> Bypassing rate limiting, bot protection, Cloudflare Turnstile, or security perimeter controls.</li>
         </ul>
       </LegalSection>
 
@@ -541,8 +512,8 @@ export function LegalPageShell({
   title,
   subtitle,
   docType,
-  lastUpdated = "October 2026",
-  effectiveDate = "October 2026",
+  lastUpdated = "November 2026",
+  effectiveDate = "November 2026",
   children,
 }: LegalPageShellProps) {
   const pathname = usePathname();

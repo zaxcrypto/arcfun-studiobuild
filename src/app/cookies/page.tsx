@@ -31,7 +31,7 @@ export default function CookiesPage() {
         <p>ArcFun uses browser <code>localStorage</code> strictly for non-tracking application preferences and decentralized interface states:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li><strong style={{ color: "#fff" }}>Theme Preference:</strong> Storing your interface visual mode (dark mode).</li>
-          <li><strong style={{ color: "#fff" }}>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for bonding curve swaps.</li>
+          <li><strong style={{ color: "#fff" }}>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for cross-chain bridge transfers.</li>
           <li><strong style={{ color: "#fff" }}>ArcFun Wallet &amp; Connector State:</strong> Remembering the last active wallet provider (e.g., ArcFun Wallet, MetaMask, Phantom, Coinbase Wallet) or public wallet addresses for automatic interface reconnection.</li>
           <li><strong style={{ color: "#fff" }}>Interface State:</strong> Persisting dismissed announcement banners, cross-chain bridge transaction history, and recently viewed token filters.</li>
         </ul>

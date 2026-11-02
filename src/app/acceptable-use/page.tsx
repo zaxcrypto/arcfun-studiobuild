@@ -28,22 +28,21 @@ export default function AcceptableUsePage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="2. Fraudulent Token Creation & Scams">
-        <p>The ArcFun Launchpad allows permissionless token creation. You must NOT deploy or promote:</p>
+      <LegalSection title="2. Fraudulent Transfers & Scams">
+        <p>You must NOT use ArcFun bridge, wallet, or chat interfaces to facilitate:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Malicious Smart Contracts:</strong> Honeypots, blacklists preventing users from selling, or contracts containing hidden backdoors or drain functions.</li>
-          <li><strong style={{ color: "#fff" }}>Scams &amp; Rug Pulls:</strong> Deceptive schemes designed to mislead investors, solicit fraudulent capital, or abandon liquidity illicitly.</li>
-          <li><strong style={{ color: "#fff" }}>Impersonation:</strong> Minting tokens pretending to be officially affiliated with established corporations, public figures, third-party projects, or ArcFun without authorization.</li>
-          <li><strong style={{ color: "#fff" }}>Phishing &amp; Social Engineering:</strong> Providing misleading metadata, websites, or social links designed to compromise user credentials or wallets.</li>
+          <li><strong style={{ color: "#fff" }}>Phishing &amp; Credential Theft:</strong> Distributing malicious links, scam domains, or social engineering schemes via Web3 Chat.</li>
+          <li><strong style={{ color: "#fff" }}>Impersonation:</strong> Posing as ArcFun team members, public figures, or third-party institutions to solicit unauthorized payments.</li>
+          <li><strong style={{ color: "#fff" }}>Stolen Funds:</strong> Bridging, transferring, or laundering digital assets acquired through theft, hacks, exploits, or cyber extortion.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="3. Market Manipulation & Abusive Trading">
-        <p>You agree not to engage in manipulative trading practices on ArcFun bonding curves, including:</p>
+      <LegalSection title="3. Automated Network Abuse & Bot Flooding">
+        <p>You agree not to engage in malicious exploitation of ArcFun infrastructure, including:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Wash Trading:</strong> Executing simultaneous buy and sell orders from coordinated wallets to artificially inflate volume or activity.</li>
-          <li><strong style={{ color: "#fff" }}>Deceptive Market Practices:</strong> Engaging in spoofing, quoting false intentions, or pump-and-dump coordination.</li>
-          <li><strong style={{ color: "#fff" }}>Abusive Automated Bot Traffic:</strong> Flooding the interface or bonding curves with front-running, spamming, or denial-of-service transactions that impair network usability for legitimate participants.</li>
+          <li><strong style={{ color: "#fff" }}>Denial-of-Service Traffic:</strong> Flooding the bridge, relayer endpoints, or Web3 Chat with spam transactions that impair usability for legitimate participants.</li>
+          <li><strong style={{ color: "#fff" }}>Relayer Gas Exploitation:</strong> Attempting to drain, manipulate, or exploit sponsored gas or relayer fee mechanisms.</li>
+          <li><strong style={{ color: "#fff" }}>Security Circumvention:</strong> Bypassing rate limiting, bot protection, Cloudflare Turnstile, or security perimeter controls.</li>
         </ul>
       </LegalSection>
 

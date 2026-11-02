@@ -50,7 +50,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyModalProps)
                   </div>
                   <div>
                     <h1 style={{ fontSize: 17, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>Privacy Policy</h1>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: October 2026 | Last Updated: October 2026</p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: November 2026 | Last Updated: November 2026</p>
                   </div>
                 </div>
                 <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
@@ -67,7 +67,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyModalProps)
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.8, margin: "0 0 10px" }}>
                     Welcome to ArcFun (&quot;ArcFun&quot;, &quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). We respect your privacy and are committed to transparent information practices. This Privacy Policy explains how data is handled when you visit{" "}
                     <a href="https://www.thearcfun.xyz" style={{ color: "#ffffff", textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 600 }}>https://www.thearcfun.xyz</a>{" "}
-                    and interact with our non-custodial software interface, including the ArcFun Bridge, ArcFun Launchpad, on-chain token trading interface, and related recovery tools (collectively, the &quot;Services&quot;).
+                    and interact with our non-custodial software interface, including the ArcFun Bridge, ArcFun Native Wallet, Web3 Chat, and related recovery tools (collectively, the &quot;Services&quot;).
                   </p>
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", lineHeight: 1.8, margin: 0 }}>
                     By accessing or interacting with the Services, you acknowledge that you have read and understood the data practices described in this Privacy Policy.
@@ -81,7 +81,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyModalProps)
                     <li>ArcFun does <strong>never</strong> request, collect, store, transmit, or have access to your private keys, seed phrases, or unencrypted cryptographic secrets.</li>
                     <li>ArcFun does <strong>not</strong> possess custody, access, or control over your digital asset balances or funds.</li>
                     <li>Cryptographic signing and wallet enclave management for ArcFun Wallets are powered by Circle Internet Financial infrastructure. ArcFun operates strictly as a non-custodial UI.</li>
-                    <li>All transactions on the ArcFun Bridge, ArcFun Wallet, or Launchpad are executed on public decentralized blockchain networks.</li>
+                    <li>All transactions on the ArcFun Bridge, ArcFun Wallet, or Web3 Chat are executed on public decentralized blockchain networks.</li>
                   </ul>
                 </PSection>
 
@@ -89,7 +89,7 @@ export function PrivacyPolicyModal({ isOpen, onClose }: PrivacyPolicyModalProps)
                   <p>Depending on how you use our interface, we may process limited categories of technical and on-chain information:</p>
                   <ul>
                     <li><strong>Public Wallet Addresses:</strong> When you connect a wallet or create an ArcFun Wallet, public blockchain addresses (EVM, Solana) are read by the interface to display token balances, transaction states, and available cross-chain transfers.</li>
-                    <li><strong>Public Blockchain Data:</strong> Transaction hashes, token transfers, bonding curve trades, token deployments, and CCTP burn/mint events are read directly from public distributed ledgers and RPC endpoints.</li>
+                    <li><strong>Public Blockchain Data:</strong> Transaction hashes, token transfers, Web3 Chat payments, and CCTP burn/mint events are read directly from public distributed ledgers and RPC endpoints.</li>
                     <li><strong>Technical &amp; Device Information:</strong> Standard server and HTTP header data, including IP address, browser type, operating system, referring URL, and approximate geolocation, may be temporarily logged by our hosting infrastructure and security filters to prevent DDoS attacks and spam.</li>
                     <li><strong>Security &amp; Bot Verification:</strong> Cloudflare Turnstile signals and challenge tokens are processed to differentiate legitimate human users from abusive automated scripts.</li>
                     <li><strong>Support Communications:</strong> If you voluntarily contact us via email, we receive your email address and any communications content you choose to share.</li>

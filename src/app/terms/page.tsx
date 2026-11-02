@@ -24,7 +24,7 @@ export default function TermsPage() {
           <a href="https://www.thearcfun.xyz" target="_blank" rel="noopener noreferrer" style={{ color: "#ffffff", textDecoration: "underline", textUnderlineOffset: 3 }}>
             https://www.thearcfun.xyz
           </a>{" "}
-          and associated software interfaces, including the ArcFun Wallet, ArcFun Bridge, ArcFun Launchpad, token creation tools, on-chain trading features, and the /recover bridge recovery utility (collectively, the &quot;Services&quot;).
+          and associated software interfaces, including the ArcFun Wallet, ArcFun Bridge, Web3 Chat & Social Pay, and the /recover bridge recovery utility (collectively, the &quot;Services&quot;).
         </p>
         <p>
           By connecting a wallet, creating or funding an ArcFun Wallet, accessing, or using the Services, you acknowledge that you have read, understood, and unconditionally agree to be bound by these Terms. If you do not agree to these Terms in their entirety, you must not create an ArcFun Wallet, must not deposit or bridge any funds, and must immediately cease accessing the Services.
@@ -38,8 +38,7 @@ export default function TermsPage() {
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
           <li><strong style={{ color: "#fff" }}>ArcFun Wallet:</strong> An embedded multi-chain digital wallet interface powered by Circle Developer-Controlled Wallets (Programmable Wallets), allowing users to generate and manage addresses across supported networks (e.g. Arc, Solana, Ethereum) through Circle&apos;s cryptographic infrastructure.</li>
           <li><strong style={{ color: "#fff" }}>ArcFun Bridge &amp; Gateway:</strong> Facilitates cross-chain native USDC transfers utilizing Circle&apos;s Cross-Chain Transfer Protocol (CCTP) and Circle Gateway.</li>
-          <li><strong style={{ color: "#fff" }}>ArcFun Launchpad:</strong> Enables users to deploy new tokens governed by on-chain bonding curve smart contracts.</li>
-          <li><strong style={{ color: "#fff" }}>Bonding Curve Trading:</strong> Provides an on-chain automated market maker interface to swap supported quote assets for launched tokens.</li>
+          <li><strong style={{ color: "#fff" }}>Web3 Chat &amp; Social Pay:</strong> Decentralized wallet-to-wallet messaging interface supporting direct peer-to-peer USDC transfers, recurring autopay schedules, and social payment requests.</li>
           <li><strong style={{ color: "#fff" }}>Bridge Recovery Utility (/recover):</strong> Provides an interface allowing users to manually self-claim or resume pending cross-chain CCTP transfers using on-chain transaction data and Circle Iris attestations.</li>
         </ul>
         <p>
@@ -92,35 +91,17 @@ export default function TermsPage() {
         </ul>
       </LegalSection>
 
-      <LegalSection title="7. Launchpad and Token Creation">
-        <p>
-          The ArcFun Launchpad allows users to deploy new cryptographic tokens on-chain. Anyone can create a token without vetting by ArcFun. As a token creator, you are solely responsible for:
-        </p>
+      <LegalSection title="7. Web3 Chat & Social Payments">
+        <p>ArcFun Web3 Chat enables direct wallet-to-wallet communication and integrated cryptocurrency transfers:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>Ensuring your token complies with all securities, commodities, consumer protection, and intellectual property laws in relevant jurisdictions.</li>
-          <li>The accuracy of any name, symbol, image, description, or social link associated with the token.</li>
-          <li>Any statements, representations, or marketing you make regarding the token.</li>
-        </ul>
-        <p>ArcFun does not endorse, verify, audit, or guarantee any user-created token.</p>
-      </LegalSection>
-
-      <LegalSection title="8. Bonding Curve Trading & Quote Assets">
-        <p>Tokens launched through ArcFun trade along an algorithmic bonding curve smart contract:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>Prices increase or decrease automatically based on buy and sell volume according to immutable mathematical formulas.</li>
-          <li>Trades may incur significant slippage and price impact, especially during periods of low liquidity or high volume.</li>
-          <li>When a token meets its funding threshold, liquidity may be migrated or graduated to decentralized exchange pools according to the smart contract logic. Graduation does not guarantee continued trading volume or future liquidity.</li>
+          <li><strong style={{ color: "#fff" }}>Peer-to-Peer Transfers:</strong> In-chat payments transfer funds directly between autonomous smart contracts and user-controlled addresses. ArcFun does not intermediate or take custody of user funds.</li>
+          <li><strong style={{ color: "#fff" }}>Autopay &amp; Recurring Payments:</strong> Users may schedule automated transfers subject to pre-configured spending limits and account balances.</li>
+          <li><strong style={{ color: "#fff" }}>Recipient Verification:</strong> You are solely responsible for verifying the identity and public address of any party with whom you exchange messages or initiate transfers.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="9. Tokenized Stock & External Quote Asset Disclaimer">
-        <p>The Launchpad may support pairing tokens with various quote assets, including tokenized stock assets where supported:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>A quote asset does not mean ArcFun issued the underlying stock or tokenized asset.</li>
-          <li>ArcFun does not represent that a meme token or launched token is backed by a stock merely because it utilizes a stock-related quote asset.</li>
-          <li>Users must independently verify token and quote asset contract addresses.</li>
-          <li>Availability of quote assets depends on third-party infrastructure and configuration, and tokenized assets may carry their own issuer, legal, custody, redemption, and transfer restrictions.</li>
-        </ul>
+      <LegalSection title="8. Circle Gateway & Unified Liquidity">
+        <p>Where supported, ArcFun facilitates unified liquidity settlement across multiple chains powered by Circle Gateway. Users understand that settlement speed and cross-chain messaging rely upon autonomous smart contracts and Circle infrastructure.</p>
       </LegalSection>
 
       <LegalSection title="10. Fees and Gas Costs">
@@ -131,7 +112,7 @@ export default function TermsPage() {
 
       <LegalSection title="11. Transactions and Blockchain Finality">
         <p>
-          Due to the immutable nature of blockchain networks, transactions cannot be cancelled, modified, or reversed once confirmed on-chain. ArcFun does not maintain a custodial refund pool. A reverted Launchpad trade does not create an ArcFun-held user balance. While the /recover tool allows claiming eligible pending bridge transfers when protocol state permits, recovery is not a guarantee of compensation for losses caused by external network failures.
+          Due to the immutable nature of blockchain networks, transactions cannot be cancelled, modified, or reversed once confirmed on-chain. ArcFun does not maintain a custodial refund pool. A reverted cross-chain or chat transfer does not create an ArcFun-held user balance. While the /recover tool allows claiming eligible pending bridge transfers when protocol state permits, recovery is not a guarantee of compensation for losses caused by external network failures.
         </p>
       </LegalSection>
 

@@ -11,11 +11,11 @@ export default function RiskPage() {
   return (
     <LegalPageShell
       title="Risk Disclosure"
-      subtitle="Please read this Risk Disclosure carefully before interacting with ArcFun software interfaces, bridges, or token launchpads."
+      subtitle="Please read this Risk Disclosure carefully before interacting with ArcFun cross-chain bridge interfaces, native smart wallets, or Web3 chat payments."
       docType="risk"
     >
       <div style={{ background: "rgba(239, 68, 68, 0.08)", border: "1px solid rgba(239, 68, 68, 0.25)", borderRadius: 14, padding: "16px 18px", color: "rgba(255, 255, 255, 0.85)", fontSize: 13.5, lineHeight: 1.7 }}>
-        <strong style={{ color: "#ef4444" }}>CRITICAL WARNING:</strong> Interacting with cryptocurrencies, decentralized finance (DeFi), cross-chain bridges, bonding curves, and meme tokens involves extreme financial and technical risk. You may lose 100% of the funds you deploy. Never trade capital you cannot afford to lose completely.
+        <strong style={{ color: "#ef4444" }}>CRITICAL WARNING:</strong> Interacting with cryptocurrencies, decentralized finance (DeFi), cross-chain bridges, and decentralized smart contracts involves financial and technical risk. You may lose 100% of the funds you deploy. Never trade capital you cannot afford to lose completely.
       </div>
 
       <LegalSection title="1. Non-Custodial Architecture & Custody Boundaries">
@@ -48,19 +48,13 @@ export default function RiskPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="4. Bonding Curve Trading Risks">
-        <p>Tokens traded on the ArcFun Launchpad execute against mathematical bonding curves on-chain:</p>
+      <LegalSection title="4. Web3 Chat & Autopay Execution Risks">
+        <p>Features that enable peer-to-peer messaging and automated recurring transfers carry specific operational considerations:</p>
         <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li><strong style={{ color: "#fff" }}>Price Impact &amp; Slippage:</strong> Buying increases token price along the curve, while selling decreases it. Large orders relative to pool depth will incur substantial slippage.</li>
-          <li><strong style={{ color: "#fff" }}>Liquidity Risk:</strong> Liquidity is governed purely by the curve contract. There is no guarantee of continuous buy or sell demand.</li>
-          <li><strong style={{ color: "#fff" }}>Graduation Uncertainty:</strong> Reaching the funding threshold and migrating liquidity to a decentralized exchange does not guarantee future trading volume, price stability, or secondary market liquidity.</li>
+          <li><strong style={{ color: "#fff" }}>Irreversible Payments:</strong> In-chat transfers execute directly on public blockchains and cannot be recalled, stopped, or refunded once submitted.</li>
+          <li><strong style={{ color: "#fff" }}>Autopay Execution &amp; Gas:</strong> Scheduled autopay executions require sufficient token balances and network gas. If balances are depleted or gas spikes exceed limits, executions safely pause.</li>
+          <li><strong style={{ color: "#fff" }}>Social Engineering &amp; Impersonation:</strong> Malicious actors may attempt to solicit transfers via messaging. ArcFun will never message you requesting funds, seed phrases, or private keys.</li>
         </ul>
-      </LegalSection>
-
-      <LegalSection title="5. User-Created Tokens & Scam Risks">
-        <p>
-          ArcFun allows permissionless token creation. ArcFun does not audit, verify, or endorse any user-launched token. Tokens may be created by anonymous third parties and could represent scams, abandoned projects, or fraudulent schemes. You are solely responsible for conducting independent due diligence on any token project before committing assets.
-        </p>
       </LegalSection>
 
       <LegalSection title="6. ArcFun Bridge & Circle CCTP Dependencies">
@@ -78,15 +72,6 @@ export default function RiskPage() {
         <p>
           Smart contracts execute autonomously on public networks. Despite rigorous development standards, smart contracts may contain unforeseen software bugs, mathematical edge cases, validator reorganizations, network forks, or malicious exploits. Once a transaction is confirmed on-chain, it cannot be reversed by ArcFun.
         </p>
-      </LegalSection>
-
-      <LegalSection title="8. Tokenized Stock & External Quote Asset Disclaimer">
-        <p>The Launchpad may support pairing tokens with tokenized real-world assets or stock tokens as quote assets:</p>
-        <ul style={{ paddingLeft: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-          <li>ArcFun is not the issuer or guarantor of any underlying stock or tokenized asset.</li>
-          <li>A meme token paired with a tokenized stock quote asset is NOT backed by equity or company ownership.</li>
-          <li>Tokenized assets may be subject to third-party issuer restrictions, transfer controls, redemption conditions, and regulatory actions.</li>
-        </ul>
       </LegalSection>
 
       <LegalSection title="9. No Financial or Investment Advice">

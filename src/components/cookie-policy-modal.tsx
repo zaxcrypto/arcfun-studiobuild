@@ -40,7 +40,7 @@ export function CookiePolicyModal({ isOpen, onClose }: CookiePolicyModalProps) {
                   </div>
                   <div>
                     <h1 style={{ fontSize: 17, fontWeight: 800, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>Cookie &amp; Storage Policy</h1>
-                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: October 2026 | Last Updated: October 2026</p>
+                    <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>Effective Date: November 2026 | Last Updated: November 2026</p>
                   </div>
                 </div>
                 <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "all 0.2s" }}
@@ -56,7 +56,7 @@ export function CookiePolicyModal({ isOpen, onClose }: CookiePolicyModalProps) {
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,0.6)", lineHeight: 1.8, margin: "0 0 10px" }}>
                     This Cookie and Local Storage Policy explains how ArcFun uses browser storage technologies when you visit{" "}
                     <a href="https://www.thearcfun.xyz" style={{ color: "#ffffff", textDecoration: "underline", textUnderlineOffset: 3, fontWeight: 600 }}>https://www.thearcfun.xyz</a>{" "}
-                    and interact with the ArcFun Bridge, Launchpad, and trading interfaces.
+                    and interact with the ArcFun Bridge, Native Wallet, and Web3 Chat interfaces.
                   </p>
                   <p style={{ fontSize: 14, color: "rgba(255,255,255,0.38)", lineHeight: 1.8, margin: 0 }}>
                     We do not track you across third-party websites or sell user profiles. We strictly use client-side storage for interface performance, security, and user preferences.
@@ -76,7 +76,7 @@ export function CookiePolicyModal({ isOpen, onClose }: CookiePolicyModalProps) {
                   <p>ArcFun uses browser <code>localStorage</code> strictly for non-tracking application preferences and decentralized interface states:</p>
                   <ul>
                     <li><strong>Theme Preference:</strong> Storing your interface visual mode (dark mode).</li>
-                    <li><strong>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for bonding curve swaps.</li>
+                    <li><strong>Trading &amp; Slippage Settings:</strong> Remembering your chosen custom slippage tolerance percentages for cross-chain bridge transfers.</li>
                     <li><strong>ArcFun Wallet &amp; Connector State:</strong> Remembering the last active wallet provider (e.g., ArcFun Wallet, MetaMask, Phantom, Coinbase Wallet) or public wallet addresses for automatic interface reconnection.</li>
                     <li><strong>Interface State:</strong> Persisting dismissed announcement banners, cross-chain bridge transaction history, and recently viewed token filters.</li>
                   </ul>
