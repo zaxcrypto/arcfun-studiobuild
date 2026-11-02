@@ -215,13 +215,12 @@ const CROSS_CHAIN_REGISTRY: Record<Chain, { rpc: string; USDC: `0x${string}`; EU
 };
 
 const formatAssetBalance = (val: string, asset?: string) => {
-  const n = Number(val);
-  if (isNaN(n) || n === 0) return "0";
-  if (asset === "cirBTC") {
-    const str = n.toFixed(8);
-    return str.replace(/(\.\d{4,}?)0+$/, "$1");
-  }
-  return n.toFixed(4);
+  if (!val || val === "0") return "0";
+  const parts = val.split(".");
+  if (parts.length === 1) return parts[0];
+  const maxDecimals = asset === "cirBTC" ? 8 : 6;
+  const decimals = parts[1].slice(0, maxDecimals).replace(/0+$/, "");
+  return decimals.length > 0 ? `${parts[0]}.${decimals}` : parts[0];
 };
 
 const limitsPromiseCache = new Map<string, { promise: Promise<any>, timestamp: number }>();
@@ -1286,13 +1285,8 @@ export function SwapBridgeManager({
       const safeMax = Math.max(0, Math.floor(Math.max(0, totalNum - arcGasBuffer) * 10000) / 10000);
       setBridgeAmount(safeMax.toString());
     } else {
-      // Non-Arc chains (Base, Ethereum, etc.): Allow full balance to be bridged cleanly
-      const totalNum = Number(fromBalFormatted);
-      let cleanAmount = fromBalFormatted;
-      if (Math.abs(totalNum - Math.round(totalNum)) < 0.00005) {
-        cleanAmount = Math.round(totalNum).toString();
-      }
-      setBridgeAmount(cleanAmount);
+      // Non-Arc chains (Base, Ethereum, etc.): Allow exact full balance to be bridged
+      setBridgeAmount(fromBalFormatted);
     }
     handleInputFocus();
   };
@@ -2525,11 +2519,7 @@ export function SwapBridgeManager({
                                     } else {
                                       // Non-Arc chains: Allow 100% full balance without deducting any buffer
                                       if (percent === 100) {
-                                        let cleanAmount = fromBalFormatted;
-                                        if (Math.abs(totalBal - Math.round(totalBal)) < 0.00005) {
-                                          cleanAmount = Math.round(totalBal).toString();
-                                        }
-                                        setBridgeAmount(cleanAmount);
+                                        setBridgeAmount(fromBalFormatted);
                                       } else {
                                         const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
                                         let val = Math.floor(totalBal * (percent / 100) * precision) / precision;
