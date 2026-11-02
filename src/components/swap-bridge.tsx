@@ -1270,7 +1270,12 @@ export function SwapBridgeManager({
   const toBalFormatted = formatUnits(crossChainToBal, crossChainToDecimals);
 
   const bridgeAmountNum = Number(bridgeAmount) || 0;
-  const bridgeAmountRaw = bridgeAmount ? parseUnits(bridgeAmount, decimalsFrom) : 0n;
+  // If user inputs a rounded amount that is within a tiny micro-unit (<= 5 atomic units / 0.000005)
+  // of their exact on-chain balance (e.g. typing "1" when on-chain balance is 0.999999), clamp to exact balance
+  const parsedBridgeRaw = bridgeAmount ? parseUnits(bridgeAmount, decimalsFrom) : 0n;
+  const bridgeAmountRaw = (parsedBridgeRaw > balanceFromRaw && (parsedBridgeRaw - balanceFromRaw) <= 5n)
+    ? balanceFromRaw
+    : parsedBridgeRaw;
   const handleMaxBridge = () => {
     const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
     if (bridgeFromAsset === "cirBTC") {
