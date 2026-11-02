@@ -1237,7 +1237,11 @@ export function SwapBridgeManager({
     if (bridgeFromAsset === "cirBTC") {
       setBridgeAmount(fromBalFormatted);
     } else {
-      const safeMax = Math.floor(Number(fromBalFormatted) * 10000) / 10000;
+      const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
+      const totalNum = Number(fromBalFormatted);
+      // On Arc, USDC is the native gas token. Leave a buffer (0.01 USDC) so the burn transaction does not revert due to gas fee deduction
+      const buffer = isArcNativeGas ? 0.01 : 0;
+      const safeMax = Math.max(0, Math.floor(Math.max(0, totalNum - buffer) * 10000) / 10000);
       setBridgeAmount(safeMax.toString());
     }
     handleInputFocus();
@@ -2449,8 +2453,12 @@ export function SwapBridgeManager({
                                   const percent = Number(e.target.value);
                                   const totalBal = Number(fromBalFormatted);
                                   if (totalBal > 0) {
+                                    const isArcNativeGas = bridgeFromChain === "Arc Mainnet" || bridgeFromChain === "Arc Testnet";
+                                    // Reserve 0.01 USDC gas buffer when sliding to 100% on Arc
+                                    const buffer = (isArcNativeGas && percent === 100) ? 0.01 : 0;
+                                    const usableBal = Math.max(0, totalBal - buffer);
                                     const precision = bridgeFromAsset === "cirBTC" ? 100000000 : 10000;
-                                    let val = Math.floor(totalBal * (percent / 100) * precision) / precision;
+                                    let val = Math.floor(usableBal * (percent / 100) * precision) / precision;
                                     setBridgeAmount(val > 0 ? val.toString() : (percent === 0 ? "" : "0"));
                                     if (txEngine.state === "failed" || txEngine.state === "success") {
                                       txEngine.dismiss();

@@ -288,8 +288,13 @@ export class CircleBridgeKitService {
       const retryAction = await (provider as any).burn(burnParams);
       burnTxHash = await retryAction.execute();
     }
+    // Wait for on-chain burn receipt and verify execution status
+    const burnReceipt = await adapter.waitForTransaction(burnTxHash as `0x${string}`, undefined, sourceChain as any);
+    if (burnReceipt?.status === "reverted") {
+      throw new Error(`Burn transaction reverted on ${req.sourceChain}. Tokens were not burned.`);
+    }
+
     req.onProgress?.("BURN_CONFIRMED", { txHash: burnTxHash });
-    await adapter.waitForTransaction(burnTxHash as `0x${string}`, undefined, sourceChain as any);
 
     // Return burn details immediately without client-side polling.
     // The backend relayer (/api/bridge/claim) handles Iris attestation verification and mint execution.
