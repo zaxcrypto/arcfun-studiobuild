@@ -374,6 +374,30 @@ function PrivyErrorSilencer() {
   return null;
 }
 
+function InnerSolanaProvider({ children, mounted }: { children: React.ReactNode; mounted: boolean }) {
+  const { mode } = useEnvironment();
+  const endpoint = React.useMemo(() => {
+    if (mode === "mainnet") {
+      return process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com";
+    }
+    return process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+  }, [mode]);
+
+  const wallets = React.useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} autoConnect={false}>
+        <WalletModalProvider>
+          <InnerWagmiProvider mounted={mounted}>
+            {children}
+          </InnerWagmiProvider>
+        </WalletModalProvider>
+      </WalletProvider>
+    </ConnectionProvider>
+  );
+}
+
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = React.useState(false);
 
@@ -381,22 +405,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  const endpoint = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
-  const wallets = React.useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], []);
-
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
       <PrivyErrorSilencer />
       <EnvironmentProvider>
-        <ConnectionProvider endpoint={endpoint}>
-          <WalletProvider wallets={wallets} autoConnect={false}>
-            <WalletModalProvider>
-              <InnerWagmiProvider mounted={mounted}>
-                {children}
-              </InnerWagmiProvider>
-            </WalletModalProvider>
-          </WalletProvider>
-        </ConnectionProvider>
+        <InnerSolanaProvider mounted={mounted}>
+          {children}
+        </InnerSolanaProvider>
       </EnvironmentProvider>
     </ThemeProvider>
   );

@@ -204,6 +204,11 @@ export async function POST(req: Request) {
         }, { onConflict: 'module' });
         
         if (accessErr) throw accessErr;
+
+        if (module === 'mainnet_access') {
+          const { setCachedMainnetAccessMode } = await import('@/lib/mainnet-access');
+          setCachedMainnetAccessMode(mode);
+        }
         
         auditMeta.module = module;
         auditMeta.mode = mode;

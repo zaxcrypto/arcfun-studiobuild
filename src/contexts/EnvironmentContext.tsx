@@ -95,9 +95,21 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  // Initial mount check
+  // Initial mount check & live sync on window focus / periodic timer
   useEffect(() => {
     checkAddressReadiness();
+    const handleFocus = () => {
+      checkAddressReadiness();
+    };
+    window.addEventListener("focus", handleFocus);
+    const interval = setInterval(() => {
+      checkAddressReadiness();
+    }, 10_000);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(interval);
+    };
   }, [checkAddressReadiness]);
 
   const switchNetwork = useCallback((newMode: EnvironmentMode): { success: boolean; reason?: string } => {

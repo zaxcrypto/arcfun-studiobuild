@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { usePublicClient, useWriteContract, useWalletClient, useAccount, useSwitchChain, useConfig } from "wagmi";
 import { getWalletClient, getPublicClient } from "@wagmi/core";
-import { pad, createPublicClient, http, fallback, stringToHex, padHex, toHex, concat, parseUnits, encodePacked, zeroAddress } from "viem";
+import { pad, createPublicClient, http, fallback, stringToHex, padHex, toHex, concat, parseUnits, encodePacked, zeroAddress, keccak256 } from "viem";
 import { CircleBridgeKitService } from "@/lib/bridge/circle-bridge-kit-service";
 import { isFastTransferSupported } from "@/config/mainnet-chain-registry";
 import { ChainRegistry } from "@/lib/bridge/chain-registry";
@@ -34,6 +34,24 @@ import { isUserWalletRejection } from "@/lib/bridge/rejection-detector";
 import { clearHistoryCache } from "@/hooks/use-onchain-history";
 import { createSolanaAdapterFromProvider } from "@circle-fin/adapter-solana";
 import { Solana, SolanaDevnet } from "@circle-fin/app-kit/chains";
+
+// Configure reliable RPC endpoints for Circle AppKit / Solana Adapter
+// The default public endpoint (api.mainnet-beta.solana.com) explicitly blocks browser dApps with HTTP 403 Forbidden.
+// We configure the verified Alchemy endpoint with publicnode failover.
+const solanaMainnetRpc = process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://solana-rpc.publicnode.com";
+const solanaDevnetRpc = process.env.NEXT_PUBLIC_SOLANA_RPC_URL || process.env.SOLANA_RPC_URL || "https://api.devnet.solana.com";
+
+if (Solana && Array.isArray((Solana as any).rpcEndpoints)) {
+  (Solana as any).rpcEndpoints = [
+    solanaMainnetRpc,
+    "https://solana-rpc.publicnode.com"
+  ];
+}
+if (SolanaDevnet && Array.isArray((SolanaDevnet as any).rpcEndpoints)) {
+  (SolanaDevnet as any).rpcEndpoints = [
+    solanaDevnetRpc
+  ];
+}
 import { PublicKey } from "@solana/web3.js";
 import bs58 from 'bs58';
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -98,6 +116,7 @@ export interface TxSummary {
   sourceChain?: string;
   destChain?: string;
   burnHash?: string;
+  manualClaim?: boolean;
 }
 
 export interface TxEngineOutput {
@@ -396,7 +415,12 @@ export function useTxEngine(): TxEngineOutput {
       const formattedAmountStr = formattedAmount || (Number(amount) / 1e6).toString();
       const assetStr = fromAsset || "USDC";
 
-      const isManual = Boolean(manualClaim);
+      const isSolanaDest = destChain.toLowerCase().includes("solana");
+      const isEvmDest =
+        !isSolanaDest &&
+        !destChain.toLowerCase().includes("stellar") &&
+        !destChain.toLowerCase().includes("sui");
+      const isManual = Boolean(manualClaim) && isEvmDest;
 
       const initial: Milestone[] = [
         { id: "appr", label: `Approve ${formattedAmountStr} ${assetStr}`, status: needsApproveStep ? "active" : "done", ...(needsApproveStep ? { startedAt: nowMs() } : { completedAt: nowMs() }) },
@@ -416,7 +440,7 @@ export function useTxEngine(): TxEngineOutput {
       setBlockNumber(null);
       setGasUsed(null);
       setGasPricePaid(null);
-      setSummary({ fromAmt: formattedAmount, fromAsset, toAsset, type: "bridge", sourceChain, destChain });
+      setSummary({ fromAmt: formattedAmount, fromAsset, toAsset, type: "bridge", sourceChain, destChain, manualClaim: Boolean(manualClaim) });
       startTimeRef.current = nowMs();
 
       let ms = [...initial];
@@ -430,11 +454,12 @@ export function useTxEngine(): TxEngineOutput {
       let relayerInterceptedProvider: any = undefined;
       isBridgeActiveRef.current = true;
       try {
-        // Auto-switch connected EVM wallet to source chain network if needed
+        // Auto-switch connected EVM wallet to source chain network if needed (EVM sources only)
+        // Non-EVM chains (Solana, Stellar, Sui) use their own native wallet providers and must never invoke EVM switchChainAsync.
         // IMPORTANT: We query the wallet's ACTUAL chain ID via raw provider RPC,
         // NOT walletClient.chain?.id which is stale React state and causes chain mismatch errors.
         const sourceChainConfig = ChainRegistry.getChainSafe(sourceChain);
-        if (sourceChainConfig && sourceChainConfig.chainId > 0 && connector) {
+        if (isEvmSource && sourceChainConfig && sourceChainConfig.chainId > 0 && connector) {
           const targetChainId = sourceChainConfig.chainId;
           let currentChainId: number | undefined;
           try {
@@ -472,9 +497,9 @@ export function useTxEngine(): TxEngineOutput {
         }
 
         // ══════════════════════════════════════════════════════════════════════
-        // MAINNET CIRCLE BRIDGE KIT INTEGRATION (Arc Mainnet <-> Base Mainnet)
+        // MAINNET CIRCLE BRIDGE KIT INTEGRATION (EVM Mainnet <-> EVM Mainnet)
         // ══════════════════════════════════════════════════════════════════════
-        if (isMainnetChain(sourceChain) && isMainnetChain(destChain)) {
+        if (isMainnetChain(sourceChain) && isMainnetChain(destChain) && !sourceChain.includes("Solana") && !destChain.includes("Solana")) {
           console.log(`[TxEngine] Routing Mainnet transfer (${sourceChain} -> ${destChain}) through CircleBridgeKitService...`);
           
           const rawProvider = connector ? await connector.getProvider() : undefined;
@@ -547,8 +572,8 @@ export function useTxEngine(): TxEngineOutput {
           }, token);
 
           // Poll backend relayer to verify Circle Iris attestation and execute destination mint
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 35; attempt++) {
             try {
               claimRes = await fetch('/api/bridge/claim', {
@@ -585,16 +610,30 @@ export function useTxEngine(): TxEngineOutput {
                 // 1. Mark Iris Attestation as DONE with green checkmark!
                 let updatedMs = completeMilestone(ms, "attestation");
 
-                // Ensure "switch" step is present
+                const destConfig = ChainRegistry.getChainSafe(destChain);
+                const isSolana = destChain.toLowerCase().includes("solana");
+                const isEvm = destConfig && destConfig.chainId > 0 && !isSolana;
+
+                // Ensure "switch" step is present only for EVM destinations
                 const hasSwitch = updatedMs.some((m) => m.id === "switch");
-                if (!hasSwitch) {
+                if (!hasSwitch && isEvm) {
                   const attIdx = updatedMs.findIndex((m) => m.id === "attestation");
                   const switchNode: Milestone = { id: "switch", label: `Switch to ${destChain}`, status: "pending" };
                   updatedMs.splice(attIdx + 1, 0, switchNode);
                 }
 
-                const destConfig = ChainRegistry.getChainSafe(destChain);
-                const isEvm = destConfig && destConfig.chainId > 0;
+                if (isSolana) {
+                  // Solana destination: User is on bridge page!
+                  // Instantly activate mint milestone and auto-trigger destination claim!
+                  updatedMs = activateMilestone(updatedMs, "mint");
+                  set(updatedMs);
+                  setState("running");
+                  setError(null);
+                  setTimeout(() => {
+                    executeManualClaim(claimPayload);
+                  }, 150);
+                  return;
+                }
 
                 // Check wallet's current chain via raw provider to avoid stale React state
                 let currentChainId = publicClient?.chain?.id;
@@ -833,8 +872,8 @@ export function useTxEngine(): TxEngineOutput {
             })
           });
 
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 25; attempt++) {
             try {
               const isMainnetReq = isMainnetChain(sourceChain) || isMainnetChain(destChain);
@@ -857,13 +896,26 @@ export function useTxEngine(): TxEngineOutput {
               claimData = await claimRes.json();
               if (claimData?.status === "MANUAL_CLAIM_REQUIRED" || claimData?.code === "RELAYER_LOW_GAS" || (manualClaim && (claimData?.message || claimData?.status === "READY_TO_CLAIM"))) {
                 clearEngineIntervals();
-                setManualClaimPayload({
+                const claimPayload = {
                   message: claimData.message,
                   attestation: claimData.attestation,
                   destinationDomain: claimData.destination_domain,
                   destChain,
                   burnHash
-                });
+                };
+                setManualClaimPayload(claimPayload);
+
+                const isSolana = destChain.toLowerCase().includes("solana");
+                if (isSolana) {
+                  set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
+                  setState("running");
+                  setError(manualClaim ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet." : null);
+                  setTimeout(() => {
+                    executeManualClaim(claimPayload);
+                  }, 150);
+                  return;
+                }
+
                 set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
                 setError(claimData.error || claimData.reason || "Self-mint enabled. Complete your claim below using your destination wallet.");
                 setState("claim_manual_required");
@@ -956,8 +1008,8 @@ export function useTxEngine(): TxEngineOutput {
             burn_tx_hash: burnHash
           }, token);
 
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 25; attempt++) {
             try {
               claimRes = await fetch('/api/bridge/claim', {
@@ -975,13 +1027,26 @@ export function useTxEngine(): TxEngineOutput {
               claimData = await claimRes.json();
               if (claimData?.status === "MANUAL_CLAIM_REQUIRED" || claimData?.code === "RELAYER_LOW_GAS" || (manualClaim && (claimData?.message || claimData?.status === "READY_TO_CLAIM"))) {
                 clearEngineIntervals();
-                setManualClaimPayload({
+                const claimPayload = {
                   message: claimData.message,
                   attestation: claimData.attestation,
                   destinationDomain: claimData.destination_domain,
                   destChain,
                   burnHash
-                });
+                };
+                setManualClaimPayload(claimPayload);
+
+                const isSolana = destChain.toLowerCase().includes("solana");
+                if (isSolana) {
+                  set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
+                  setState("running");
+                  setError(manualClaim ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet." : null);
+                  setTimeout(() => {
+                    executeManualClaim(claimPayload);
+                  }, 150);
+                  return;
+                }
+
                 set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
                 setError(claimData.error || claimData.reason || "Self-mint enabled. Complete your claim below using your destination wallet.");
                 setState("claim_manual_required");
@@ -1203,8 +1268,8 @@ export function useTxEngine(): TxEngineOutput {
             source_address: suiWallet.address
           }, token);
 
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 25; attempt++) {
             try {
               claimRes = await fetch('/api/bridge/claim', {
@@ -1545,7 +1610,13 @@ export function useTxEngine(): TxEngineOutput {
                           const claimRes = await fetch('/api/bridge/claim', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                            body: JSON.stringify({ burn_tx_hash: localBurnTx })
+                            body: JSON.stringify({
+                              burn_tx_hash: localBurnTx,
+                              source_chain: sourceChain,
+                              destination_chain: destChain,
+                              wallet_address: address,
+                              amount: formattedAmount
+                            })
                           });
                           const claimData = await claimRes.json();
                           if (claimData.status === "MANUAL_CLAIM_REQUIRED" || claimData.code === "RELAYER_LOW_GAS") {
@@ -1741,7 +1812,7 @@ export function useTxEngine(): TxEngineOutput {
           }
         };
 
-        if ((fromAsset === "EURC" || fromAsset === "cirBTC" || !isAppKitChain(sourceChain) || !isAppKitChain(destChain)) && !sourceChain.includes("Solana") && !sourceChain.includes("Stellar") && !sourceChain.includes("Sui")) {
+        if ((fromAsset === "EURC" || fromAsset === "cirBTC" || !isAppKitChain(sourceChain) || !isAppKitChain(destChain) || destChain.includes("Solana")) && !sourceChain.includes("Solana") && !sourceChain.includes("Stellar") && !sourceChain.includes("Sui")) {
           // ══════════════════════════════════════════════════════════════════════
           // DIRECT NATIVE EVM CCTP BURN FLOW (For X Layer Testnet & custom chains)
           // ══════════════════════════════════════════════════════════════════════
@@ -1893,7 +1964,10 @@ export function useTxEngine(): TxEngineOutput {
           if (destChain.includes("Solana")) {
             if (!destAddressVal) throw new Error("Destination Solana address required");
             const walletPubKey = new PublicKey(destAddressVal);
-            const usdcMintPubKey = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+            const isMainnetSol = isMainnetChain(destChain) || isMainnetChain(sourceChain);
+            const usdcMintPubKey = new PublicKey(
+              isMainnetSol ? "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" : "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU"
+            );
             const tokenProgramId = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
             const ataProgramId = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
             const [ataPubKey] = PublicKey.findProgramAddressSync(
@@ -1901,6 +1975,9 @@ export function useTxEngine(): TxEngineOutput {
               ataProgramId
             );
             mintRecipient = ("0x" + Buffer.from(ataPubKey.toBytes()).toString("hex")) as `0x${string}`;
+
+            const finalityThreshold = isMainnetSol ? 2000 : 1000;
+            const finalMaxFee = isMainnetSol ? 0n : evmMaxFee;
 
             burnHash = await writeContractAsync({
               chainId: sourceChainConfig?.chainId,
@@ -1913,8 +1990,8 @@ export function useTxEngine(): TxEngineOutput {
                 mintRecipient,
                 sourceDomain.usdc as `0x${string}`,
                 zero32,
-                evmMaxFee,
-                1000
+                finalMaxFee,
+                finalityThreshold
               ],
             });
           } else if (destChain.includes("Stellar")) {
@@ -2033,8 +2110,8 @@ export function useTxEngine(): TxEngineOutput {
             source_address: solanaWallet.publicKey ? solanaWallet.publicKey.toBase58() : undefined
           }, token);
 
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 25; attempt++) {
             try {
               claimRes = await fetch('/api/bridge/claim', {
@@ -2060,8 +2137,25 @@ export function useTxEngine(): TxEngineOutput {
                   destChain,
                   burnHash
                 });
+                const isSolana = destChain.toLowerCase().includes("solana");
+                if (isSolana) {
+                  set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
+                  setState("running");
+                  setError(manualClaim ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet." : null);
+                  setTimeout(() => {
+                    executeManualClaim({
+                      message: claimData.message,
+                      attestation: claimData.attestation,
+                      destinationDomain: claimData.destination_domain,
+                      destChain,
+                      burnHash
+                    });
+                  }, 150);
+                  return;
+                }
+
                 set(completeMilestone(activateMilestone(ms, "mint"), "attestation"));
-                setError(claimData.error || "Backend gas is low, so please claim your USDC manually.");
+                setError(claimData.error || (manualClaim ? "Self-mint enabled. Please confirm the mint transaction in your destination wallet." : "Backend gas is low, so please claim your USDC manually."));
                 setState("claim_manual_required");
                 return;
               }
@@ -2173,9 +2267,9 @@ export function useTxEngine(): TxEngineOutput {
           return;
         }
 
-        if (sourceChain.includes("Solana") && !isAppKitChain(destChain)) {
+        if (sourceChain.includes("Solana")) {
           // ══════════════════════════════════════════════════════════════════════
-          // NATIVE SOLANA -> CUSTOM EVM FLOW (Solana Devnet -> X Layer Testnet)
+          // NATIVE SOLANA -> EVM FLOW (Solana Mainnet / Devnet -> Any EVM Chain)
           // ══════════════════════════════════════════════════════════════════════
           const activeDomains = getCctpDomains(isMainnetChain(sourceChain) || isMainnetChain(destChain) ? "mainnet" : "testnet");
           const destDomain = activeDomains[destChain] || resolveCctpDomain(destChain, isMainnetChain(destChain) ? "mainnet" : "testnet");
@@ -2331,15 +2425,31 @@ export function useTxEngine(): TxEngineOutput {
                     setManualClaimPayload(claimPayload);
 
                     let updatedMs = completeMilestone(ms, "attestation");
+                    const destConfig = ChainRegistry.getChainSafe(destChain);
+                    const isSolana = destChain.toLowerCase().includes("solana");
+                    const isEvm = destConfig && destConfig.chainId > 0 && !isSolana;
+
+                    // Ensure "switch" step is present only for EVM destinations
                     const hasSwitch = updatedMs.some((m) => m.id === "switch");
-                    if (!hasSwitch) {
+                    if (!hasSwitch && isEvm) {
                       const attIdx = updatedMs.findIndex((m) => m.id === "attestation");
                       const switchNode: Milestone = { id: "switch", label: `Switch to ${destChain}`, status: "pending" };
                       updatedMs.splice(attIdx + 1, 0, switchNode);
                     }
 
-                    const destConfig = ChainRegistry.getChainSafe(destChain);
-                    const isEvm = destConfig && destConfig.chainId > 0;
+                    if (isSolana) {
+                      // Solana destination: User is on bridge page!
+                      // Instantly activate mint milestone and auto-trigger destination claim!
+                      updatedMs = activateMilestone(updatedMs, "mint");
+                      setMilestones([...updatedMs]);
+                      setState("running");
+                      setError(null);
+                      setTimeout(() => {
+                        executeManualClaim(claimPayload);
+                      }, 200);
+                      resolve();
+                      return;
+                    }
 
                     let currentChainId = publicClient?.chain?.id;
                     try {
@@ -2570,17 +2680,18 @@ export function useTxEngine(): TxEngineOutput {
 
                         if (claimRes.ok) {
                           const json = await claimRes.json();
-                          if (json.status === "MANUAL_CLAIM_REQUIRED" || json.code === "RELAYER_LOW_GAS") {
+                          if (json.status === "MANUAL_CLAIM_REQUIRED" || json.code === "RELAYER_LOW_GAS" || json.status === "READY_TO_CLAIM" || (manualClaim && json.message)) {
                             isForceResolved = true;
                             clearEngineIntervals();
 
-                            setManualClaimPayload({
+                            const claimPayload = {
                               message: json.message,
                               attestation: json.attestation,
                               destinationDomain: json.destination_domain,
                               destChain,
                               burnHash: localBurnTx || stepHash
-                            });
+                            };
+                            setManualClaimPayload(claimPayload);
 
                             setMilestones((prev) => {
                               let next = completeMilestone(prev, "burn", localBurnTx || undefined);
@@ -2589,7 +2700,18 @@ export function useTxEngine(): TxEngineOutput {
                               return next;
                             });
 
-                            setError(json.error || json.reason || "Destination relayer gas is low. Your USDC is safe on-chain and ready to claim manually.");
+                            const isSolana = destChain.toLowerCase().includes("solana");
+                            if (isSolana) {
+                              console.log("[TxEngine] Attestation ready for Solana destination. Auto-triggering destination mint in Phantom...");
+                              setState("running");
+                              setError(manualClaim ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet." : null);
+                              setTimeout(() => {
+                                executeManualClaim(claimPayload);
+                              }, 150);
+                              return;
+                            }
+
+                            setError(manualClaim ? "Self-mint enabled. Please confirm the mint transaction in your destination wallet." : (json.error || json.reason || "Destination relayer gas is low. Your USDC is safe on-chain and ready to claim manually."));
                             setState("claim_manual_required");
                             console.log("[CLAIM_MANUAL_REQUIRED] Relayer low gas reported, manual claim fallback activated.");
                           } else if (json.success && !isForceResolved && json.mint_tx_hash) {
@@ -2712,6 +2834,7 @@ export function useTxEngine(): TxEngineOutput {
             if (chainName === "Linea Mainnet") return "Linea";
             if (chainName === "Ink Sepolia") return "Ink_Testnet";
             if (chainName === "Injective EVM Testnet") return "Injective_Testnet";
+            if (chainName === "Solana Mainnet" || chainName === "Solana") return "Solana";
             return chainName.replaceAll(" ", "_");
           };
 
@@ -3014,18 +3137,19 @@ export function useTxEngine(): TxEngineOutput {
 
                 if (claimRes.ok) {
                   const json = await claimRes.json();
-                  if (json.status === "MANUAL_CLAIM_REQUIRED" || json.code === "RELAYER_LOW_GAS") {
+                  if (json.status === "MANUAL_CLAIM_REQUIRED" || json.code === "RELAYER_LOW_GAS" || json.status === "READY_TO_CLAIM" || (manualClaim && json.message)) {
                     isForceResolved = true;
                     if (claimPollInterval) clearInterval(claimPollInterval);
                     if (backgroundPollInterval) clearInterval(backgroundPollInterval);
 
-                    setManualClaimPayload({
+                    const claimPayload = {
                       message: json.message,
                       attestation: json.attestation,
                       destinationDomain: json.destination_domain,
                       destChain,
                       burnHash: localBurnTx || stepHash
-                    });
+                    };
+                    setManualClaimPayload(claimPayload);
 
                     setMilestones((prev) => {
                       let next = completeMilestone(prev, "appr");
@@ -3035,9 +3159,20 @@ export function useTxEngine(): TxEngineOutput {
                       return next;
                     });
 
-                    setError(json.error || json.reason || "Destination relayer gas is low. Your USDC is safe on-chain and ready to claim manually.");
+                    const isSolana = destChain.toLowerCase().includes("solana");
+                    if (isSolana) {
+                      console.log("[TxEngine] Attestation ready for Solana destination. Auto-triggering destination mint in Phantom...");
+                      setState("running");
+                      setError(manualClaim ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet." : null);
+                      setTimeout(() => {
+                        executeManualClaim(claimPayload);
+                      }, 150);
+                      return;
+                    }
+
+                    setError(manualClaim ? "Self-mint enabled. Please confirm the mint transaction in your destination wallet." : (json.error || json.reason || "Destination relayer gas is low. Your USDC is safe on-chain and ready to claim manually."));
                     setState("claim_manual_required");
-                    console.log("[CLAIM_MANUAL_REQUIRED] Relayer low gas reported during polling, manual claim fallback activated.");
+                    console.log("[CLAIM_MANUAL_REQUIRED] Manual claim mode activated.");
                   } else if (json.success && !isForceResolved && json.mint_tx_hash) {
                     isForceResolved = true;
                     if (claimPollInterval) clearInterval(claimPollInterval);
@@ -3175,8 +3310,10 @@ export function useTxEngine(): TxEngineOutput {
         return next;
       });
 
-      // 1. If attestation not yet in memory, fetch it via /api/bridge/claim
-      if (!msg || !att) {
+      const isSolanaDest = targetDestChain.toLowerCase().includes("solana");
+
+      // 1. If attestation not yet in memory OR destination is Solana, fetch attestation / check status via /api/bridge/claim
+      if (!msg || !att || isSolanaDest) {
         try {
           const res = await fetch("/api/bridge/claim", {
             method: "POST",
@@ -3187,6 +3324,7 @@ export function useTxEngine(): TxEngineOutput {
               destination_chain: targetDestChain,
               manual_claim: true,
               action: "get_attestation",
+              force_relayer: false,
             }),
           });
           const data = await res.json();
@@ -3216,8 +3354,222 @@ export function useTxEngine(): TxEngineOutput {
               timestamp: Date.now(),
               userAddress: evmAddress || undefined
             }, isMainnetChain(targetSourceChain) ? "mainnet" : "testnet");
+            setMintHash(completedMintHash);
             setState("success");
+            clearHistoryCache(evmAddress);
             return;
+          }
+
+          if (data.message && data.attestation) {
+            msg = data.message;
+            att = data.attestation;
+          }
+
+          if (isSolanaDest) {
+            // First: if already completed or has mint_tx_hash
+            if (data.success && data.mint_tx_hash) {
+              const completedMintHash = data.mint_tx_hash;
+              setMilestones((prev) => {
+                let next = completeMilestone(prev, "appr");
+                next = completeMilestone(next, "burn", targetBurnHash || undefined);
+                next = completeMilestone(next, "attestation");
+                next = completeMilestone(next, "mint", completedMintHash);
+                return next;
+              });
+              saveTxHistory({
+                id: targetBurnHash,
+                txHash: targetBurnHash,
+                burnHash: targetBurnHash,
+                mintHash: completedMintHash,
+                fromAsset,
+                toAsset: fromAsset,
+                amount: amount || "0",
+                status: "success",
+                type: "bridge_cctp",
+                sourceChain: targetSourceChain,
+                destChain: targetDestChain,
+                timestamp: Date.now(),
+                userAddress: evmAddress || undefined
+              }, isMainnetChain(targetSourceChain) ? "mainnet" : "testnet");
+              setMintHash(completedMintHash);
+              setState("success");
+              clearHistoryCache(evmAddress);
+              return;
+            }
+
+            // Prompt user's Solana wallet (Phantom / Solflare) if connected!
+            if (solanaWallet && solanaWallet.publicKey && msg && att) {
+              try {
+                console.log("[Manual Claim] Solana wallet connected. Prompting wallet to sign mint transaction...");
+                const provider = solanaWallet.wallet?.adapter || solanaWallet;
+                if ((provider as any).isConnected === undefined && (provider as any).connected !== undefined) {
+                  (provider as any).isConnected = (provider as any).connected;
+                }
+                const isDevnet = targetDestChain.toLowerCase().includes("devnet");
+                const targetChain = isDevnet ? SolanaDevnet : Solana;
+                const solanaRpc = isDevnet
+                  ? (process.env.NEXT_PUBLIC_SOLANA_DEVNET_RPC_URL || "https://api.devnet.solana.com")
+                  : (process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || "https://solana-rpc.publicnode.com");
+                const { Connection } = await import("@solana/web3.js");
+                const connection = new Connection(solanaRpc, "confirmed");
+
+                const adapter = await createSolanaAdapterFromProvider({
+                  provider: provider as any,
+                  connection,
+                  capabilities: { supportedChains: [targetChain] }
+                });
+
+                const cleanMsg = (msg.startsWith("0x") ? msg.slice(2) : msg);
+                const cleanAtt = (att.startsWith("0x") ? att.slice(2) : att);
+                const messageBuf = Buffer.from(cleanMsg, "hex");
+                const sourceDomainNum = messageBuf.readUInt32BE(4);
+                const allDomains = isDevnet ? CCTP_DOMAINS : MAINNET_CCTP_DOMAINS;
+                let srcName = "";
+                for (const [name, config] of Object.entries(allDomains)) {
+                  if (config.domain === sourceDomainNum) {
+                    srcName = name;
+                    break;
+                  }
+                }
+                const srcConfig = allDomains[srcName];
+                const fromChain = {
+                  type: srcName.toLowerCase().includes("stellar") ? "stellar" : "evm",
+                  chain: srcName.replace(/\s+/g, "_"),
+                  name: srcName,
+                  usdcAddress: srcConfig?.usdc || "",
+                  cctp: {
+                    domain: sourceDomainNum,
+                    contracts: {
+                      v2: {
+                        type: "split",
+                        tokenMessenger: srcConfig?.tokenMessenger || "",
+                        messageTransmitter: srcConfig?.messageTransmitter || ""
+                      }
+                    }
+                  }
+                };
+
+                const handler = adapter.actionRegistry.actionHandlers.get("cctp.v2.receiveMessage");
+                if (handler) {
+                  const recipientHex = cleanMsg.slice(184 * 2, 216 * 2);
+                  const { PublicKey } = await import("@solana/web3.js");
+                  const recipientAta = new PublicKey(Buffer.from(recipientHex, "hex"));
+                  let destOwner = solanaWallet.publicKey.toBase58();
+                  try {
+                    const accInfo = await connection.getAccountInfo(recipientAta);
+                    if (accInfo && accInfo.data.length === 165) {
+                      destOwner = new PublicKey(accInfo.data.slice(32, 64)).toBase58();
+                    }
+                  } catch (_) {}
+
+                  const eventNonce = cleanMsg.slice(12 * 2, 44 * 2);
+                  const adapterAddress = await adapter.getAddress(targetChain);
+
+                  const result = await (handler as any)({
+                    fromChain,
+                    toChain: targetChain,
+                    eventNonce,
+                    destinationAddress: destOwner,
+                    message: '0x' + cleanMsg,
+                    attestation: '0x' + cleanAtt
+                  }, {
+                    chain: targetChain,
+                    address: adapterAddress
+                  });
+
+                  console.log("[Manual Claim] Prompting Solana wallet to sign mint transaction...");
+                  const signature = await result.execute();
+                  console.log(`[Manual Claim] Solana wallet successfully signed & executed mint: ${signature}`);
+
+                  setMintHash(signature);
+                  setMilestones((prev) => {
+                    let next = completeMilestone(prev, "attestation");
+                    next = completeMilestone(next, "mint", signature);
+                    return next;
+                  });
+                  setState("success");
+                  saveTxHistory({
+                    id: targetBurnHash,
+                    txHash: targetBurnHash,
+                    burnHash: targetBurnHash,
+                    mintHash: signature,
+                    fromAsset,
+                    toAsset: fromAsset,
+                    amount: amount || "0",
+                    status: "success",
+                    type: "bridge_cctp",
+                    sourceChain: targetSourceChain,
+                    destChain: targetDestChain,
+                    timestamp: Date.now(),
+                    userAddress: evmAddress || undefined
+                  }, isMainnetChain(targetSourceChain) ? "mainnet" : "testnet");
+                  clearHistoryCache(evmAddress);
+                  return;
+                }
+              } catch (userWalletErr: any) {
+                console.warn("[Manual Claim] Solana wallet user signature error:", userWalletErr);
+                const errStr = String(userWalletErr?.message || userWalletErr).toLowerCase();
+                if (errStr.includes("rejected") || errStr.includes("cancelled") || errStr.includes("user rejected")) {
+                  setError("Claim transaction was cancelled in your Solana wallet. Your funds remain safe on-chain and claimable.");
+                  setState("mint_rejected");
+                  setMilestones((prev) => {
+                    let next = completeMilestone(prev, "attestation");
+                    next = next.map((m) =>
+                      m.id === "mint"
+                        ? { ...m, label: "Mint Cancelled in Wallet", status: "failed" as const, completedAt: nowMs() }
+                        : m
+                    );
+                    return next;
+                  });
+                  return;
+                }
+                console.log("[Manual Claim] Non-rejection wallet error, falling back to backend relayer...");
+              }
+            }
+
+            // Fallback: If wallet was not connected or non-rejection error, invoke backend relayer
+            console.log(`[Manual Claim] Invoking backend relayer for ${targetBurnHash}...`);
+            const relayerRes = await fetch("/api/bridge/claim", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                burn_tx_hash: targetBurnHash,
+                source_chain: targetSourceChain,
+                destination_chain: targetDestChain,
+                force_relayer: true,
+                action: "execute_claim"
+              }),
+            });
+            const relayerData = await relayerRes.json();
+            if (relayerData.success && (relayerData.mint_tx_hash || relayerData.already_completed || relayerData.bridge_status === "COMPLETED")) {
+              const completedMintHash = relayerData.mint_tx_hash || "ALREADY_CLAIMED_ON_CHAIN";
+              setMintHash(completedMintHash);
+              setMilestones((prev) => {
+                let next = completeMilestone(prev, "attestation");
+                next = completeMilestone(next, "mint", completedMintHash);
+                return next;
+              });
+              setState("success");
+              saveTxHistory({
+                id: targetBurnHash,
+                txHash: targetBurnHash,
+                burnHash: targetBurnHash,
+                mintHash: completedMintHash,
+                fromAsset,
+                toAsset: fromAsset,
+                amount: amount || "0",
+                status: "success",
+                type: "bridge_cctp",
+                sourceChain: targetSourceChain,
+                destChain: targetDestChain,
+                timestamp: Date.now(),
+                userAddress: evmAddress || undefined
+              }, isMainnetChain(targetSourceChain) ? "mainnet" : "testnet");
+              clearHistoryCache(evmAddress);
+              return;
+            } else {
+              throw new Error(relayerData.error || relayerData.reason || "Failed to claim USDC on Solana");
+            }
           }
 
           if (!res.ok || !data.message || !data.attestation) {
@@ -3291,25 +3643,38 @@ export function useTxEngine(): TxEngineOutput {
             // Pre-check if nonce has already been received on-chain
             try {
               const cleanMsg = (msg.startsWith("0x") ? msg.slice(2) : msg);
+              const sourceDomainNum = parseInt(cleanMsg.slice(8, 16), 16);
+              const nonceHex = cleanMsg.slice(24, 40);
+              const nonceNum = BigInt("0x" + nonceHex);
+              const hashKey = keccak256(encodePacked(['uint32', 'uint64'], [sourceDomainNum, nonceNum]));
               const rawNonce32 = ('0x' + cleanMsg.slice(24, 88)) as `0x${string}`;
               const isMainnet = isMainnetChain(targetDestChain);
               const activeDomains = getCctpDomains(isMainnet ? "mainnet" : "testnet");
               const domainDef = activeDomains[targetDestChain] || resolveCctpDomain(targetDestChain, isMainnet ? "mainnet" : "testnet");
 
               if (domainDef?.messageTransmitter) {
-                const usedNonce = await publicClient.readContract({
-                  address: domainDef.messageTransmitter as `0x${string}`,
-                  abi: MESSAGE_TRANSMITTER_V2_ABI,
-                  functionName: "usedNonces",
-                  args: [rawNonce32],
-                }).catch(() => 0n);
+                const [usedHash, usedRaw] = await Promise.all([
+                  publicClient.readContract({
+                    address: domainDef.messageTransmitter as `0x${string}`,
+                    abi: MESSAGE_TRANSMITTER_V2_ABI,
+                    functionName: "usedNonces",
+                    args: [hashKey],
+                  }).catch(() => 0n),
+                  publicClient.readContract({
+                    address: domainDef.messageTransmitter as `0x${string}`,
+                    abi: MESSAGE_TRANSMITTER_V2_ABI,
+                    functionName: "usedNonces",
+                    args: [rawNonce32],
+                  }).catch(() => 0n),
+                ]);
 
-                if (usedNonce > 0n) {
-                  console.log(`[Manual Claim] Nonce ${rawNonce32} already claimed on ${targetDestChain}! Auto-resolving as success.`);
+                if (usedHash > 0n || usedRaw > 0n) {
+                  console.log(`[Manual Claim] Nonce ${nonceNum} already claimed on ${targetDestChain}! Auto-resolving as success.`);
                   saveTxHistory({
                     id: targetBurnHash,
                     txHash: targetBurnHash,
                     burnHash: targetBurnHash,
+                    mintHash: "ALREADY_CLAIMED_ON_CHAIN",
                     type: "bridge_cctp",
                     status: "success",
                     amount: summary?.fromAmt || "0.01",
@@ -3423,17 +3788,50 @@ export function useTxEngine(): TxEngineOutput {
             }
           })();
         } catch (mintErr: any) {
-          const msgLower = String(mintErr?.message || mintErr).toLowerCase();
-          if (
+          const msgLower = String(mintErr?.message || mintErr?.details || mintErr?.cause || mintErr).toLowerCase();
+
+          // Check if nonce was already claimed (including Simulation revert "Nonce already used" or #-39000)
+          let isAlreadyClaimedOnChain =
             msgLower.includes("already_claimed") ||
             msgLower.includes("already claimed") ||
             msgLower.includes("nonce already used") ||
-            msgLower.includes("noncealreadyused")
-          ) {
+            msgLower.includes("noncealreadyused") ||
+            msgLower.includes("#-39000");
+
+          // Always verify on-chain before declaring failure or cancellation
+          if (!isAlreadyClaimedOnChain && publicClient && msg) {
+            try {
+              const cleanMsg = (msg.startsWith("0x") ? msg.slice(2) : msg);
+              const sourceDomainNum = parseInt(cleanMsg.slice(8, 16), 16);
+              const nonceHex = cleanMsg.slice(24, 40);
+              const nonceNum = BigInt("0x" + nonceHex);
+              const hashKey = keccak256(encodePacked(['uint32', 'uint64'], [sourceDomainNum, nonceNum]));
+              const isMainnet = isMainnetChain(targetDestChain);
+              const activeDomains = getCctpDomains(isMainnet ? "mainnet" : "testnet");
+              const domainDef = activeDomains[targetDestChain] || resolveCctpDomain(targetDestChain, isMainnet ? "mainnet" : "testnet");
+              if (domainDef?.messageTransmitter) {
+                const used = await publicClient.readContract({
+                  address: domainDef.messageTransmitter as `0x${string}`,
+                  abi: MESSAGE_TRANSMITTER_V2_ABI,
+                  functionName: "usedNonces",
+                  args: [hashKey],
+                }).catch(() => 0n);
+                if (used > 0n) {
+                  isAlreadyClaimedOnChain = true;
+                }
+              }
+            } catch (postCheckErr) {
+              console.warn("[Manual Claim] Post-error nonce verification warning:", postCheckErr);
+            }
+          }
+
+          if (isAlreadyClaimedOnChain) {
+            console.log(`[Manual Claim] Destination claim verified already completed on-chain. Auto-resolving as success.`);
             saveTxHistory({
               id: targetBurnHash,
               txHash: targetBurnHash,
               burnHash: targetBurnHash,
+              mintHash: "ALREADY_CLAIMED_ON_CHAIN",
               type: "bridge_cctp",
               status: "success",
               amount: summary?.fromAmt || "0.01",
@@ -3446,7 +3844,7 @@ export function useTxEngine(): TxEngineOutput {
             });
             setState("success");
             setMilestones((prev) =>
-              completeMilestone(completeMilestone(prev, "attestation"), "mint")
+              completeMilestone(completeMilestone(prev, "attestation"), "mint", "ALREADY_CLAIMED_ON_CHAIN")
             );
             clearHistoryCache(evmAddress);
             return;
@@ -3512,8 +3910,12 @@ export function useTxEngine(): TxEngineOutput {
             return next;
           });
         }
+      } else if (targetDestChain.includes("Solana")) {
+        // Solana claim handled above; if execution reached here with an error
+        setError(`Please ensure your Solana wallet or relayer claims your USDC on ${targetDestChain}.`);
+        setState("claim_manual_required");
       } else {
-        // Non-EVM chains
+        // Other non-EVM chains
         setError(`Please claim your USDC on ${targetDestChain} using your destination wallet.`);
         setState("claim_manual_required");
       }
@@ -3641,8 +4043,8 @@ export function useTxEngine(): TxEngineOutput {
 
           // Trigger backend API to claim
           set(activateMilestone(completeMilestone(ms, "attestation"), "mint"));
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 30; attempt++) {
             if (!isBridgeActiveRef.current) break;
             try {
@@ -3924,8 +4326,8 @@ export function useTxEngine(): TxEngineOutput {
 
           set(activateMilestone(completeMilestone(ms, "attestation"), "mint"));
 
-          let claimRes;
-          let claimData;
+          let claimRes: any;
+          let claimData: any;
           for (let attempt = 0; attempt < 30; attempt++) {
             if (!isBridgeActiveRef.current) break;
             try {
@@ -4070,6 +4472,7 @@ export function useTxEngine(): TxEngineOutput {
         if (!chainName) return "";
         if (chainName === "Ink Sepolia") return "Ink_Testnet";
         if (chainName === "Injective EVM Testnet") return "Injective_Testnet";
+        if (chainName === "Solana Mainnet" || chainName === "Solana") return "Solana";
         return chainName.replaceAll(" ", "_");
       };
 

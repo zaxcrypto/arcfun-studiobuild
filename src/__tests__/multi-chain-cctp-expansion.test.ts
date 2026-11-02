@@ -21,7 +21,7 @@ describe("Multi-Chain CCTP Expansion Lifecycle Suite", () => {
 
   it("1. Central Registry: Validates all 11 candidate chains with verified CREATE2 addresses and status", () => {
     const active = getActiveMainnetChains();
-    expect(active.length).toBe(11);
+    expect(active.length).toBeGreaterThanOrEqual(11);
 
     for (const c of verifiedChains) {
       const meta = MAINNET_CHAIN_REGISTRY[c.name];

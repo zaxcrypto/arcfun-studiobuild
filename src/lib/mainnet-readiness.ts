@@ -16,8 +16,8 @@ const REQUIRED_MAINNET_VARS = [
   "NEXT_PUBLIC_ARB_MAINNET_RPC_URL",
 ] as const;
 
-export function getMainnetReadiness(): MainnetReadiness {
-  const enabled = (
+export function getMainnetReadiness(isExplicitlyOpen?: boolean): MainnetReadiness {
+  const enabled = isExplicitlyOpen !== undefined ? isExplicitlyOpen : (
     process.env.NEXT_PUBLIC_ARCFUN_MAINNET_ENABLED === "true" ||
     process.env.ARCFUN_MAINNET_ENABLED === "true"
   );

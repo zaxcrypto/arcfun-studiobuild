@@ -191,71 +191,76 @@ export function Header({
         </>
       )}
 
-      {/* Mainnet Toggle (Locked for non-admin users) */}
-      <div
-        onClick={() => {
-          if (isUserAdmin) {
-            if (mode === "testnet") {
-              const res = switchNetwork("mainnet");
-              if (!res.success) {
-                alert(res.reason || "Mainnet is disabled globally.");
-              }
-            } else {
-              setMode("testnet");
-            }
-          }
-        }}
-        title={!isUserAdmin ? "No access" : (!readiness.mainnetEnabled || !readiness.mainnetReady ? "Mainnet is disabled globally" : "Toggle Mainnet / Testnet")}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "9px 12px",
-          borderRadius: 10,
-          cursor: isUserAdmin ? "pointer" : "not-allowed",
-          opacity: isUserAdmin ? 1 : 0.75,
-          transition: "background 0.15s ease",
-          userSelect: "none",
-        }}
-        onMouseEnter={(e) => {
-          if (isUserAdmin) {
-            e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "transparent";
-        }}
-      >
-        <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Mainnet</span>
-
-        {/* Toggle Switch */}
-        <div
-          style={{
-            width: 36,
-            height: 20,
-            borderRadius: 99,
-            background: isUserAdmin && mode === "mainnet" ? "#22c55e" : (isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.14)"),
-            position: "relative",
-            transition: "background 0.2s ease",
-            flexShrink: 0,
-            opacity: isUserAdmin ? 1 : 0.5,
-          }}
-        >
+      {/* Mainnet Toggle (Accessible to all when open_to_everyone, otherwise admin only) */}
+      {(() => {
+        const canToggleMainnet = Boolean(isUserAdmin || readiness.mainnetEnabled);
+        return (
           <div
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: "50%",
-              background: "#ffffff",
-              position: "absolute",
-              top: 2,
-              left: isUserAdmin && mode === "mainnet" ? 18 : 2,
-              transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            onClick={() => {
+              if (canToggleMainnet) {
+                if (mode === "testnet") {
+                  const res = switchNetwork("mainnet");
+                  if (!res.success) {
+                    alert(res.reason || "Mainnet is disabled globally.");
+                  }
+                } else {
+                  setMode("testnet");
+                }
+              }
             }}
-          />
-        </div>
-      </div>
+            title={!canToggleMainnet ? "Mainnet is restricted to administrators" : (!readiness.mainnetReady ? "Mainnet configuration is pending" : "Toggle Mainnet / Testnet")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "9px 12px",
+              borderRadius: 10,
+              cursor: canToggleMainnet ? "pointer" : "not-allowed",
+              opacity: canToggleMainnet ? 1 : 0.65,
+              transition: "background 0.15s ease",
+              userSelect: "none",
+            }}
+            onMouseEnter={(e) => {
+              if (canToggleMainnet) {
+                e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 500, color: "var(--text-primary)" }}>Mainnet</span>
+
+            {/* Toggle Switch */}
+            <div
+              style={{
+                width: 36,
+                height: 20,
+                borderRadius: 99,
+                background: canToggleMainnet && mode === "mainnet" ? "#22c55e" : (isDark ? "rgba(255,255,255,0.18)" : "rgba(0,0,0,0.14)"),
+                position: "relative",
+                transition: "background 0.2s ease",
+                flexShrink: 0,
+                opacity: canToggleMainnet ? 1 : 0.5,
+              }}
+            >
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  background: "#ffffff",
+                  position: "absolute",
+                  top: 2,
+                  left: canToggleMainnet && mode === "mainnet" ? 18 : 2,
+                  transition: "left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       <div style={{ height: 1, background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)", margin: "2px 4px" }} />
 

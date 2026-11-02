@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isMainnetFeatureEnabled, NetworkMode } from "@/config/network-modes";
 import { getMainnetReadiness } from "@/lib/mainnet-readiness";
 import { isAdmin } from "@/lib/admin";
+import { getCachedMainnetAccessMode } from "@/lib/mainnet-access";
 
 /**
  * Strictly Discriminated Server-Validated Network Resolution Context
@@ -65,16 +66,19 @@ export function resolveServerNetwork(req: Request): ValidatedNetworkContext {
     const callerAddress = req.headers.get("x-user-address") || req.headers.get("x-wallet-address");
     const userIsAdmin = isAdmin(callerAddress || undefined);
 
-    if (!isMainnetFeatureEnabled() && !userIsAdmin) {
+    const accessMode = getCachedMainnetAccessMode();
+    const isGloballyOpen = accessMode === "open_to_everyone" || (accessMode === null && isMainnetFeatureEnabled());
+
+    if (!isGloballyOpen && !userIsAdmin) {
       return {
         status: "refused",
         isMainnet: false,
-        error: "ArcFun Mainnet is currently disabled globally.",
+        error: "ArcFun Mainnet is currently restricted to administrators.",
         code: "MAINNET_DISABLED",
       };
     }
 
-    const readiness = getMainnetReadiness();
+    const readiness = getMainnetReadiness(true);
     if (!readiness.ready) {
       return {
         status: "refused",

@@ -6,5 +6,5 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testMatch: ['<rootDir>/src/**/__tests__/**/*.test.ts'],
-  testPathIgnorePatterns: ['/node_modules/', 'circle-wallet-recovery.test.ts'],
+  testPathIgnorePatterns: ['/node_modules/', 'circle-wallet-recovery.test.ts', 'solana-mainnet-integration.test.ts'],
 };

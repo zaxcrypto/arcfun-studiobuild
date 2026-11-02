@@ -70,6 +70,8 @@ export const CHAIN_ID_MAP: Record<string, number> = {
   "Robinhood Mainnet": 4663,
   "Polygon Amoy Testnet": 80002,
   "X Layer Testnet": 1952,
+  "Solana Mainnet": 101,
+  "Solana Devnet": 103,
 };
 
 export const TESTNET_SUPPORTED_CHAINS = [
@@ -83,7 +85,7 @@ export const TESTNET_SUPPORTED_CHAINS = [
 ] as const;
 
 export const MAINNET_SUPPORTED_CHAINS = [
-  "Arc Mainnet", "Base Mainnet", "Arbitrum Mainnet", "Ethereum Mainnet",
+  "Arc Mainnet", "Base Mainnet", "Solana Mainnet", "Arbitrum Mainnet", "Ethereum Mainnet",
   "OP Mainnet", "Polygon Mainnet", "Avalanche Mainnet", "Sonic Mainnet",
   "Ink Mainnet", "Unichain Mainnet", "Linea Mainnet"
 ] as const;
@@ -132,7 +134,7 @@ export const CROSS_CHAIN_REGISTRY: Record<string, { rpc: string; USDC: string; E
   // Injective EVM Testnet — reused by Chat|Pay. Single source of truth.
   "Injective EVM Testnet": { rpc: process.env.NEXT_PUBLIC_INJECTIVE_TESTNET_RPC_URL || "https://k8s.testnet.json-rpc.injective.network/", USDC: "0x0C382e685bbeeFE5d3d9C29e29E341fEE8E84C5d", EURC: "0x0", cirBTC: "0x0" },
   "Solana Devnet": { rpc: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || "https://api.devnet.solana.com", USDC: "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU", EURC: "0x0", cirBTC: "0x0" },
-  "Solana Mainnet": { rpc: "", USDC: "0x0", EURC: "0x0", cirBTC: "0x0" },
+  "Solana Mainnet": { rpc: process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com", USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", EURC: "0x0", cirBTC: "0x0" },
   "Avalanche Fuji": { rpc: process.env.NEXT_PUBLIC_AVALANCHE_FUJI_RPC_URL || "https://api.avax-test.network/ext/bc/C/rpc", USDC: "0x5425890298aed601595a70ab815c96711a31bc65", EURC: "0x0", cirBTC: "0x0" },
   "Robinhood Mainnet": { rpc: process.env.NEXT_PUBLIC_ROBINHOOD_MAINNET_RPC_URL || "", USDC: "0x0", EURC: "0x0", cirBTC: "0x0", USDG: "0x5fc5360d0400a0fd4f2af552add042d716f1d168", USDe: "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34" },
   "Polygon Amoy Testnet": { rpc: process.env.NEXT_PUBLIC_POLYGON_AMOY_RPC_URL || "https://rpc-amoy.polygon.technology", USDC: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582", EURC: "0x0", cirBTC: "0x0" },

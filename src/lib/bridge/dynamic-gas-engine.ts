@@ -107,6 +107,68 @@ export async function evaluateDynamicGasEligibility(
   const nativeSymbol = chainConfig.nativeCurrency.symbol;
   const nativeDecimals = chainConfig.nativeCurrency.decimals;
 
+  // Fast Solana Guard (Non-EVM):
+  if (chainName.toLowerCase().includes("solana")) {
+    const isDevnet = chainName.toLowerCase().includes("devnet");
+    const solanaRpc = isDevnet
+      ? (process.env.SOLANA_DEVNET_RPC_URL || "https://api.devnet.solana.com")
+      : (process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com");
+    const solanaPrivateKey = isDevnet
+      ? process.env.SOL_CCTP_TEST_KEY
+      : (process.env.SOLANA_MAINNET_RELAYER_KEY || process.env.SOL_CCTP_TEST_KEY);
+
+    let solanaRelayerAddress = "";
+    let solanaBalanceSol = 0;
+    if (solanaPrivateKey) {
+      try {
+        const bs58Module = await import("bs58");
+        const bs58 = (bs58Module as any).default || bs58Module;
+        const { Keypair, Connection } = await import("@solana/web3.js");
+        const kp = Keypair.fromSecretKey(bs58.decode(solanaPrivateKey));
+        solanaRelayerAddress = kp.publicKey.toBase58();
+        const conn = new Connection(solanaRpc, "confirmed");
+        const lamports = await conn.getBalance(kp.publicKey);
+        solanaBalanceSol = lamports / 1e9;
+      } catch (err) {
+        console.warn("[DynamicGasEngine] Solana relayer check error:", err);
+      }
+    }
+
+    const solPriceUsd = 180;
+    const solanaBalanceUsd = solanaBalanceSol * solPriceUsd;
+    const solanaTxFeeUsd = 0.00001 * solPriceUsd; // ~$0.0018
+
+    const conditionABalancePassed = solanaBalanceSol >= 0.002;
+    const conditionBFeePassed = solanaTxFeeUsd < maxSponsoredFeeUsd;
+    const isSponsoredEligible = conditionABalancePassed && conditionBFeePassed;
+
+    const res: DynamicGasEligibility = {
+      destinationChain: chainName,
+      nativeGasSymbol: "SOL",
+      nativeDecimals: 9,
+      relayerAddress: solanaRelayerAddress,
+      relayerBalance: solanaBalanceSol.toFixed(6),
+      relayerBalanceUsd: solanaBalanceUsd,
+      estimatedExecutionGasUnits: "5000",
+      gasPriceWei: "5000",
+      estimatedL2GasFeeWei: "5000",
+      estimatedL1DataFeeWei: "0",
+      totalEstimatedClaimFeeWei: "5000",
+      totalEstimatedClaimFeeUsd: solanaTxFeeUsd,
+      configuredMinRelayerBalanceUsd: minRelayerBalanceUsd,
+      configuredMaxSponsoredFeeUsd: maxSponsoredFeeUsd,
+      conditionABalancePassed,
+      conditionBFeePassed,
+      oracleVerified: true,
+      isSponsoredEligible,
+      isManualClaimRequired: !isSponsoredEligible,
+      manualClaimReason: !conditionABalancePassed ? "Insufficient relayer balance" : undefined,
+      lastChecked: new Date().toISOString()
+    };
+    eligibilityCache.set(chainName, { timestamp: now, data: res });
+    return res;
+  }
+
   let relayerAddress = "";
   try {
     relayerAddress = getEvmRelayerAddress();

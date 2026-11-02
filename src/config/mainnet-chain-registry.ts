@@ -9,17 +9,17 @@
  * but only exposed when active in network-modes / feature-flags.
  */
 
-import { Arc, Base, Ethereum, Arbitrum, Optimism, Polygon, Avalanche, Sonic, Ink, Unichain, Linea } from "@circle-fin/bridge-kit";
+import { Arc, Base, Ethereum, Arbitrum, Optimism, Polygon, Avalanche, Sonic, Ink, Unichain, Linea, Solana } from "@circle-fin/bridge-kit";
 
 export interface MainnetChainMetadata {
   name: string;
   chainKey: string;
   chainId: number;
   domain: number;
-  usdcAddress: `0x${string}`;
-  tokenMessengerV2: `0x${string}`;
-  messageTransmitterV2: `0x${string}`;
-  tokenMessengerWithFees?: `0x${string}` | null;
+  usdcAddress: string;
+  tokenMessengerV2: string;
+  messageTransmitterV2: string;
+  tokenMessengerWithFees?: string | null;
   fastTransferSupported: boolean;
   rpcUrl: string;
   fallbackRpcUrl?: string;
@@ -208,6 +208,22 @@ export const MAINNET_CHAIN_REGISTRY: Record<string, MainnetChainMetadata> = {
     explorerUrl: "https://lineascan.build/tx/{hash}",
     status: "ACTIVE",
     nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 }
+  },
+  "Solana Mainnet": {
+    name: "Solana Mainnet",
+    chainKey: "Solana",
+    chainId: 101,
+    domain: Solana.cctp.domain, // 5
+    usdcAddress: Solana.usdcAddress as string, // EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+    tokenMessengerV2: Solana.cctp.contracts.v2.tokenMessenger as string, // CCTPV2vPZJS2u2BBsUoscuikbYjnpFmbFsvVuJdgUMQe
+    messageTransmitterV2: Solana.cctp.contracts.v2.messageTransmitter as string, // CCTPV2Sm4AdWt5296sk4P66VBZ7bEhcARwFaaS9YPbeC
+    tokenMessengerWithFees: null,
+    fastTransferSupported: true,
+    rpcUrl: process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com",
+    fallbackRpcUrl: process.env.SOLANA_MAINNET_FALLBACK_RPC_URL || "https://solana-rpc.publicnode.com",
+    explorerUrl: "https://solscan.io/tx/{hash}",
+    status: "ACTIVE",
+    nativeCurrency: { name: "Solana", symbol: "SOL", decimals: 9 }
   }
 };
 

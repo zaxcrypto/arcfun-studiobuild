@@ -57,6 +57,7 @@ export class ChainRegistry {
     ["Ink Mainnet", { name: "Ink Mainnet", chainId: 57073, rpcUrl: process.env.NEXT_PUBLIC_INK_MAINNET_RPC_URL || "https://rpc-gel.inkonchain.com", nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }, status: "ACTIVE" }],
     ["Unichain Mainnet", { name: "Unichain Mainnet", chainId: 130, rpcUrl: process.env.NEXT_PUBLIC_UNICHAIN_MAINNET_RPC_URL || "https://mainnet.unichain.org", nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }, status: "ACTIVE" }],
     ["Linea Mainnet", { name: "Linea Mainnet", chainId: 59144, rpcUrl: process.env.NEXT_PUBLIC_LINEA_MAINNET_RPC_URL || "https://rpc.linea.build", nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }, status: "ACTIVE" }],
+    ["Solana Mainnet", { name: "Solana Mainnet", chainId: 0, rpcUrl: process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://api.mainnet-beta.solana.com", nativeCurrency: { name: "Solana", symbol: "SOL", decimals: 9 }, status: "ACTIVE" }],
   ]);
 
   /** Retrieves active chains for UI dropdowns, strictly isolated by environment */

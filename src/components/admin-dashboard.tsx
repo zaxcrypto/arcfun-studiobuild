@@ -183,6 +183,7 @@ export function AdminDashboard() {
         const parsed: any = {};
         data.forEach((row: any) => {
           if (row.module === "bridge") parsed.bridgeMode = row.mode;
+          if (row.module === "mainnet_access") parsed.mainnetAccessMode = row.mode;
           if (row.module === "bridge_evm_to_sui") parsed.evmToSuiMode = row.mode;
           if (row.module === "bridge_sui_to_evm") parsed.suiToEvmMode = row.mode;
           if (row.module === "bridge_solana_to_sui") parsed.solanaToSuiMode = row.mode;
@@ -250,6 +251,35 @@ export function AdminDashboard() {
     }
   };
 
+  const handleMainnetAccessChange = async (mode: "Open To Everyone" | "Admin Only") => {
+    if (!address) return;
+
+    setTogglingMode(`mainnet_access-${mode}`);
+    const previousMode = accessSettings?.mainnetAccessMode;
+    const dbMode = mode === "Open To Everyone" ? "open_to_everyone" : "admin_only";
+    setAccessSettings((prev: any) => ({
+      ...prev,
+      mainnetAccessMode: dbMode
+    }));
+
+    try {
+      await dispatchAdminAction("update_onchain_access_setting", "mainnet_access", {
+        module: "mainnet_access",
+        mode: dbMode
+      });
+    } catch (e: any) {
+      setAccessSettings((prev: any) => ({
+        ...prev,
+        mainnetAccessMode: previousMode
+      }));
+      if (!e?.message?.includes("User rejected")) {
+        console.error("Failed to update Mainnet access mode:", e);
+      }
+    } finally {
+      setTogglingMode(null);
+    }
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 1000, margin: "0 auto", width: "100%" }}>
 
@@ -298,6 +328,84 @@ export function AdminDashboard() {
       {/* ── SECTION 1: BRIDGE CONTROLS & GAS (COMPACT) ── */}
       {activeSection === "control" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Mainnet Access Mode */}
+          <div style={{ background: "var(--surface)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
+            <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 600, fontSize: 13, color: "var(--text-primary)" }}>Mainnet Access Mode</span>
+              {(() => {
+                const raw = (accessSettings?.mainnetAccessMode || "").toLowerCase();
+                const isPublic = raw.includes("open");
+                return (
+                  <span
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 600,
+                      color: "var(--text-muted)",
+                      background: "var(--surface-soft, rgba(0,0,0,0.04))",
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                      border: "1px solid var(--border)",
+                    }}
+                  >
+                    {isPublic ? "Open To Everyone" : "Admin Only"}
+                  </span>
+                );
+              })()}
+            </div>
+
+            <div style={{ padding: "12px 14px" }}>
+              {(() => {
+                const raw = (accessSettings?.mainnetAccessMode || "").toLowerCase();
+                const isPublic = raw.includes("open");
+                const currentSelection = isPublic ? "Open To Everyone" : "Admin Only";
+                const modes = ["Open To Everyone", "Admin Only"];
+
+                return (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {modes.map((mode) => {
+                      const isSelected = currentSelection === mode;
+                      const isUpdating = togglingMode === `mainnet_access-${mode}`;
+
+                      return (
+                        <button
+                          key={mode}
+                          onClick={() => handleMainnetAccessChange(mode as "Open To Everyone" | "Admin Only")}
+                          disabled={togglingMode !== null}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 8,
+                            padding: "7px 14px",
+                            borderRadius: 8,
+                            border: isSelected ? "1px solid var(--text-primary)" : "1px solid var(--border)",
+                            background: isSelected ? "var(--surface-soft, rgba(0,0,0,0.06))" : "transparent",
+                            cursor: togglingMode !== null ? "not-allowed" : "pointer",
+                            fontSize: 12,
+                            fontWeight: isSelected ? 600 : 500,
+                            color: isSelected ? "var(--text-primary)" : "var(--text-muted)",
+                            transition: "all 0.12s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 12,
+                              height: 12,
+                              borderRadius: "50%",
+                              border: isSelected ? "4px solid var(--text-primary)" : "1.5px solid var(--text-muted)",
+                              background: "transparent",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <span>{mode} {isUpdating ? "(...)" : ""}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
           {/* Bridge Access Mode */}
           <div style={{ background: "var(--surface)", borderRadius: 12, border: "1px solid var(--border)", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>

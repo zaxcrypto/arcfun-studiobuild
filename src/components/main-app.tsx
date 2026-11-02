@@ -566,7 +566,8 @@ export function MainApp({ tokenAddress }: MainAppProps = {}) {
                 </button>
                 <button
                   onClick={() => {
-                    if (!admin) return;
+                    const canAccessMainnet = Boolean(admin || readiness.mainnetEnabled);
+                    if (!canAccessMainnet) return;
                     const res = switchNetwork("mainnet");
                     if (!res.success) {
                       alert(res.reason || "Mainnet is not enabled or ready.");
@@ -576,7 +577,7 @@ export function MainApp({ tokenAddress }: MainAppProps = {}) {
                       navigate("bridge");
                     }
                   }}
-                  title={!admin ? "No access" : (!readiness.mainnetEnabled && !admin ? "Mainnet is disabled globally" : (sidebarCollapsed ? "Mainnet Mode" : undefined))}
+                  title={!(admin || readiness.mainnetEnabled) ? "Mainnet is restricted to administrators" : (sidebarCollapsed ? "Mainnet Mode" : undefined)}
                   style={{
                     flex: sidebarCollapsed ? undefined : 1,
                     width: sidebarCollapsed ? 36 : undefined,
@@ -596,8 +597,8 @@ export function MainApp({ tokenAddress }: MainAppProps = {}) {
                     boxShadow: mode === "mainnet"
                       ? (isDark ? "none" : "0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)")
                       : "none",
-                    cursor: admin ? "pointer" : "not-allowed",
-                    opacity: admin ? 1 : 0.7,
+                    cursor: (admin || readiness.mainnetEnabled) ? "pointer" : "not-allowed",
+                    opacity: (admin || readiness.mainnetEnabled) ? 1 : 0.65,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",

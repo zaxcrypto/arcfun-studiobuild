@@ -1059,6 +1059,7 @@ export function SwapBridgeManager({
           : "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
         let res = { balance: 0n, decimals: 6 };
+        const isMainnetSol = isMainnetChain(chainName);
         await withSolanaFailover(async (rpcUrl) => {
           const connection = new Connection(rpcUrl);
           const accounts = await connection.getParsedTokenAccountsByOwner(
@@ -1070,7 +1071,7 @@ export function SwapBridgeManager({
             const balanceInfo = accounts.value[0].account.data.parsed.info.tokenAmount;
             res = { balance: BigInt(balanceInfo.amount), decimals: balanceInfo.decimals || 6 };
           }
-        }, "fetchSingleChainBalance");
+        }, "fetchSingleChainBalance", isMainnetSol);
         return res;
       } catch (e) {
         console.error("Failed to fetch Solana balance", e);
@@ -1404,13 +1405,16 @@ export function SwapBridgeManager({
       setBridgeToChain(validDest[0] || null);
     }
 
-    const activeDomains = getCctpDomains(mode);
-    // Auto-switch wallet (Phase 3)
-    const requiredChainId = CHAIN_ID_MAP[newChain] ?? activeDomains[newChain]?.chainId;
-    if (requiredChainId && walletChainId !== requiredChainId && switchChainAsync) {
-      switchChainAsync({ chainId: requiredChainId }).catch((err) => {
-        console.error("Auto-switch failed or rejected:", err);
-      });
+    const isNewChainEvm = !newChain.includes("Solana") && !newChain.includes("Stellar") && !newChain.includes("Sui");
+    if (isNewChainEvm) {
+      const activeDomains = getCctpDomains(mode);
+      // Auto-switch wallet (Phase 3)
+      const requiredChainId = CHAIN_ID_MAP[newChain] ?? activeDomains[newChain]?.chainId;
+      if (requiredChainId && walletChainId !== requiredChainId && switchChainAsync) {
+        switchChainAsync({ chainId: requiredChainId }).catch((err) => {
+          console.error("Auto-switch failed or rejected:", err);
+        });
+      }
     }
   }, [bridgeFromChain, bridgeToChain, mode, walletChainId, switchChainAsync]);
 
@@ -1446,12 +1450,15 @@ export function SwapBridgeManager({
 
     setIsRotated(r => !r);
 
-    const activeDomains = getCctpDomains(mode);
-    const requiredChainId = CHAIN_ID_MAP[newFrom] ?? activeDomains[newFrom]?.chainId;
-    if (requiredChainId && walletChainId !== requiredChainId && switchChainAsync) {
-      switchChainAsync({ chainId: requiredChainId }).catch((err) => {
-        console.error("Auto-switch failed or rejected:", err);
-      });
+    const isNewFromEvm = !newFrom.includes("Solana") && !newFrom.includes("Stellar") && !newFrom.includes("Sui");
+    if (isNewFromEvm) {
+      const activeDomains = getCctpDomains(mode);
+      const requiredChainId = CHAIN_ID_MAP[newFrom] ?? activeDomains[newFrom]?.chainId;
+      if (requiredChainId && walletChainId !== requiredChainId && switchChainAsync) {
+        switchChainAsync({ chainId: requiredChainId }).catch((err) => {
+          console.error("Auto-switch failed or rejected:", err);
+        });
+      }
     }
   }, [bridgeFromChain, bridgeToChain, bridgeFromAsset, bridgeToAsset, crossChainBal, crossChainDecimals, crossChainToBal, crossChainToDecimals, mode, walletChainId, switchChainAsync]);
 
@@ -1682,8 +1689,9 @@ export function SwapBridgeManager({
     const destChainName = bridgeToChain || txEngine.summary?.destChain || "Arc Testnet";
 
     const activeDomains = getCctpDomains(mode);
+    const isSourceEvm = !sourceChainName.includes("Solana") && !sourceChainName.includes("Stellar") && !sourceChainName.includes("Sui");
     const requiredChainId = (sourceChainName ? CHAIN_ID_MAP[sourceChainName] : undefined) ?? (sourceChainName ? activeDomains[sourceChainName] : undefined)?.chainId;
-    if (address && requiredChainId && walletChainId !== requiredChainId) {
+    if (isSourceEvm && address && requiredChainId && walletChainId !== requiredChainId) {
       try {
         await switchChainAsync({ chainId: requiredChainId });
       } catch (e) {

@@ -89,6 +89,7 @@ export async function POST(req: Request) {
       const wAddr = (reqWallet || "0x0000000000000000000000000000000000000000").slice(0, 42).toLowerCase();
       const amt = reqAmount || "0";
 
+      const isMainnet = isMainnetChain(srcChain) || isMainnetChain(dstChain);
       const { data: autoInserted } = await supabaseAdmin.from('bridge_transactions').insert([{
         wallet_address: wAddr,
         source_chain: srcChain,
@@ -96,7 +97,8 @@ export async function POST(req: Request) {
         token_symbol: reqTokenSymbol || 'USDC',
         amount: amt,
         burn_tx_hash,
-        bridge_status: 'PROCESSING_CLAIM'
+        bridge_status: 'PROCESSING_CLAIM',
+        network: isMainnet ? 'mainnet' : 'testnet'
       }]).select().single();
 
       existing = (autoInserted as any) || {
@@ -289,12 +291,55 @@ export async function POST(req: Request) {
             }
           }
         }
+
+        if (existing.destination_chain.toLowerCase().includes("solana")) {
+          const { Connection, PublicKey } = await import('@solana/web3.js');
+          const isDevnet = existing.destination_chain.toLowerCase().includes("devnet");
+          const rpcUrl = isDevnet ? "https://api.devnet.solana.com" : (process.env.SOLANA_MAINNET_RPC_URL || "https://solana-rpc.publicnode.com");
+          const connection = new Connection(rpcUrl, 'confirmed');
+
+          const clean = messageHex.startsWith('0x') ? messageHex.slice(2) : messageHex;
+          const nonceHex = clean.slice(24, 40);
+          const nonceNum = BigInt("0x" + nonceHex);
+          const cctpProgId = new PublicKey(isDevnet ? "CCTPmbSD7gX1bxKPAmg377KP2pndK48Lz46f7j6eXk97" : "CCTPiPYPc6AsJuwueEnWgSgucKArv2Mm8KwhE28gyq2b");
+
+          const [pda] = PublicKey.findProgramAddressSync(
+            [
+              Buffer.from("used_nonce"),
+              Buffer.from(new Uint8Array(new BigUint64Array([BigInt(sourceDomainDef.domain)]).buffer)),
+              Buffer.from(new Uint8Array(new BigUint64Array([nonceNum]).buffer))
+            ],
+            cctpProgId
+          );
+
+          const accountInfo = await connection.getAccountInfo(pda).catch(() => null);
+          if (accountInfo) {
+            console.log(`[Claim API] Fast pre-check: Solana CCTP already claimed detected for ${burn_tx_hash}. Auto-completing.`);
+            const completedMint = destMintHash || existing.mint_tx_hash || 'ALREADY_CLAIMED_ON_CHAIN';
+            await supabaseAdmin.from('bridge_transactions').update({
+              bridge_status: 'COMPLETED',
+              mint_tx_hash: completedMint,
+              completed_at: new Date().toISOString(),
+              failure_reason: null
+            }).eq('burn_tx_hash', burn_tx_hash);
+            isCompleted = true;
+            return NextResponse.json({
+              success: true,
+              already_completed: true,
+              bridge_status: 'COMPLETED',
+              mint_tx_hash: completedMint,
+              message: 'Bridge already completed on-chain'
+            }, { status: 200 });
+          }
+        }
       } catch (nonceCheckErr) {
         console.warn("[Claim API] Fast nonce pre-check skipped:", nonceCheckErr);
       }
 
+      const isForceRelayer = Boolean(body.force_relayer || reqAction === "execute_claim");
+
       // 2b. Manual Claim Mode / Attestation Fetch
-      if (reqManual || reqAction === "get_attestation") {
+      if (!isForceRelayer && (reqManual || reqAction === "get_attestation")) {
         console.log(`[Claim API] Manual claim mode requested for ${burn_tx_hash}. Returning attestation payload.`);
         await supabaseAdmin.from('bridge_transactions').update({
           bridge_status: 'CLAIM_MANUAL_REQUIRED',
@@ -312,26 +357,28 @@ export async function POST(req: Request) {
       }
 
       // 2c. Gas-Aware Pre-Flight: Dynamic Gas Eligibility (Condition A & B via Chainlink Oracle)
-      const { evaluateDynamicGasEligibility } = await import('@/lib/bridge/dynamic-gas-engine');
-      const dynamicEligibility = await evaluateDynamicGasEligibility(existing.destination_chain);
-      if (dynamicEligibility.isManualClaimRequired) {
-        console.warn(`[Claim API] Destination relayer gas eligibility failed for ${existing.destination_chain}: ${dynamicEligibility.manualClaimReason}. Transitioning to CLAIM_MANUAL_REQUIRED.`);
-        await supabaseAdmin.from('bridge_transactions').update({
-          bridge_status: 'CLAIM_MANUAL_REQUIRED',
-          updated_at: new Date().toISOString()
-        }).eq('burn_tx_hash', burn_tx_hash);
-        isCompleted = true;
-        return NextResponse.json({
-          success: false,
-          status: 'MANUAL_CLAIM_REQUIRED',
-          code: 'RELAYER_LOW_GAS',
-          error: dynamicEligibility.manualClaimReason || 'Backend gas is low, so please claim your USDC manually.',
-          reason: dynamicEligibility.manualClaimReason,
-          message: messageHex,
-          attestation: attestationHex,
-          destination_domain: destDomainDef.domain,
-          eligibility: dynamicEligibility
-        }, { status: 200 });
+      if (!isForceRelayer) {
+        const { evaluateDynamicGasEligibility } = await import('@/lib/bridge/dynamic-gas-engine');
+        const dynamicEligibility = await evaluateDynamicGasEligibility(existing.destination_chain);
+        if (dynamicEligibility.isManualClaimRequired) {
+          console.warn(`[Claim API] Destination relayer gas eligibility failed for ${existing.destination_chain}: ${dynamicEligibility.manualClaimReason}. Transitioning to CLAIM_MANUAL_REQUIRED.`);
+          await supabaseAdmin.from('bridge_transactions').update({
+            bridge_status: 'CLAIM_MANUAL_REQUIRED',
+            updated_at: new Date().toISOString()
+          }).eq('burn_tx_hash', burn_tx_hash);
+          isCompleted = true;
+          return NextResponse.json({
+            success: false,
+            status: 'MANUAL_CLAIM_REQUIRED',
+            code: 'RELAYER_LOW_GAS',
+            error: dynamicEligibility.manualClaimReason || 'Backend gas is low, so please claim your USDC manually.',
+            reason: dynamicEligibility.manualClaimReason,
+            message: messageHex,
+            attestation: attestationHex,
+            destination_domain: destDomainDef.domain,
+            eligibility: dynamicEligibility
+          }, { status: 200 });
+        }
       }
 
       // 3. Delegate to ChainRouter for specific chain execution, or check Solana claim status
@@ -339,10 +386,10 @@ export async function POST(req: Request) {
       try {
         if (existing.destination_chain.toLowerCase().includes("solana")) {
           const { Connection, PublicKey } = await import('@solana/web3.js');
-          const isDevnet = existing.destination_chain.includes("Devnet");
+          const isDevnet = existing.destination_chain.toLowerCase().includes("devnet");
           const rpcUrl = isDevnet
             ? (process.env.SOLANA_DEVNET_RPC_URL || 'https://api.devnet.solana.com')
-            : (process.env.SOLANA_MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com');
+            : (process.env.SOLANA_MAINNET_RPC_URL || process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || 'https://api.mainnet-beta.solana.com');
 
           const connection = new Connection(rpcUrl, 'confirmed');
 
@@ -357,7 +404,7 @@ export async function POST(req: Request) {
             programId
           );
 
-          const accountInfo = await connection.getAccountInfo(pda);
+          const accountInfo = await connection.getAccountInfo(pda).catch(() => null);
           if (accountInfo) {
             console.log(`[Claim API] Solana CCTP already claimed detected for ${burn_tx_hash}. Marking as COMPLETED.`);
             mint_tx_hash = "ALREADY_CLAIMED_ON_CHAIN";
@@ -369,6 +416,7 @@ export async function POST(req: Request) {
           mint_tx_hash = await ChainRouter.executeMint(destDomainDef.domain, messageHex, attestationHex, existing.destination_chain);
         }
       } catch (e: unknown) {
+        console.error(`[Claim API] Raw mint error for ${burn_tx_hash}:`, e);
         const errorMsg = String((e as Error)?.message || e);
         const errLower = errorMsg.toLowerCase();
         if (

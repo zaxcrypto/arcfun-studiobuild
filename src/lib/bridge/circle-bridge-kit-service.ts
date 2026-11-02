@@ -11,7 +11,16 @@
  *    to prevent client network-switching disruption and eliminate duplicate mint attempts.
  */
 
-import { BridgeKit, TransferSpeed, Arc, Base } from "@circle-fin/bridge-kit";
+import { BridgeKit, TransferSpeed, Arc, Base, Solana } from "@circle-fin/bridge-kit";
+
+// Override Solana rpcEndpoints to prevent 403 Forbidden from default api.mainnet-beta.solana.com
+if (Solana && Array.isArray((Solana as any).rpcEndpoints)) {
+  const solanaMainnetRpc = process.env.NEXT_PUBLIC_SOLANA_MAINNET_RPC_URL || process.env.SOLANA_MAINNET_RPC_URL || "https://solana-rpc.publicnode.com";
+  (Solana as any).rpcEndpoints = [
+    solanaMainnetRpc,
+    "https://solana-rpc.publicnode.com"
+  ];
+}
 import { createViemAdapterFromProvider, ViemAdapter } from "@circle-fin/adapter-viem-v2";
 import type { EIP1193Provider } from "viem";
 import { http, fallback, createPublicClient } from "viem";
@@ -76,6 +85,7 @@ export class CircleBridgeKitService {
     const key = this.resolveChainKey(chainName);
     if (key === "Arc") return Arc;
     if (key === "Base") return Base;
+    if (key === "Solana") return Solana;
     const kit = this.getKit();
     const found = kit.getSupportedChains().find(c => c.chain === key || c.name === chainName);
     return found || Arc;

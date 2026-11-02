@@ -47,7 +47,7 @@ describe("Phase 4: Mainnet CCTP Bridge Website Integration Tests", () => {
       const chains = getSupportedChains("mainnet");
       expect(chains).toContain("Arc Mainnet");
       expect(chains).toContain("Base Mainnet");
-      expect(chains).not.toContain("Solana Mainnet");
+      expect(chains).toContain("Solana Mainnet");
       expect(chains).not.toContain("Sui Mainnet");
     });
 

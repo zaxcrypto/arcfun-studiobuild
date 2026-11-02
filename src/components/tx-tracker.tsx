@@ -212,6 +212,7 @@ function MilestoneNode({
   summary?: TxSummary | null;
   isMintRejected?: boolean;
 }) {
+  const [isClaiming, setIsClaiming] = useState(false);
   const isDone = m.status === "done";
   const isFailed = m.status === "failed";
   const isAttesting = isAttestationPending && (m.status === "active" || m.id === "final" || m.id === "claim");
@@ -356,7 +357,16 @@ function MilestoneNode({
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {isActive && !isStepRejected && (m.id === "mint" || m.id === "claim") && isClaimManualRequired && onManualClaim && (
               <button
-                onClick={onManualClaim}
+                onClick={async () => {
+                  if (isClaiming) return;
+                  setIsClaiming(true);
+                  try {
+                    await onManualClaim();
+                  } finally {
+                    setIsClaiming(false);
+                  }
+                }}
+                disabled={isClaiming}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -364,29 +374,39 @@ function MilestoneNode({
                   padding: "4px 12px",
                   fontSize: 11.5,
                   fontWeight: 600,
-                  color: "var(--text-primary)",
+                  color: isClaiming ? "var(--text-secondary)" : "var(--text-primary)",
                   background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
                   border: "1px solid var(--border)",
                   borderRadius: 9999,
-                  cursor: "pointer",
+                  cursor: isClaiming ? "wait" : "pointer",
+                  opacity: isClaiming ? 0.7 : 1,
                   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                  if (!isClaiming) e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
+                  if (!isClaiming) e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
                 }}
               >
-                <RefreshCw size={11} />
-                <span>Claim Tokens</span>
+                <RefreshCw size={11} className={isClaiming ? "animate-spin" : ""} />
+                <span>{isClaiming ? "Claiming..." : "Claim Tokens"}</span>
               </button>
             )}
 
             {isActive && m.id === "switch" && isClaimManualRequired && onManualClaim && (
               <button
-                onClick={onManualClaim}
+                onClick={async () => {
+                  if (isClaiming) return;
+                  setIsClaiming(true);
+                  try {
+                    await onManualClaim();
+                  } finally {
+                    setIsClaiming(false);
+                  }
+                }}
+                disabled={isClaiming}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -394,23 +414,24 @@ function MilestoneNode({
                   padding: "4px 12px",
                   fontSize: 11.5,
                   fontWeight: 600,
-                  color: "var(--text-primary)",
+                  color: isClaiming ? "var(--text-secondary)" : "var(--text-primary)",
                   background: "var(--bg-secondary, rgba(0, 0, 0, 0.05))",
                   border: "1px solid var(--border)",
                   borderRadius: 9999,
-                  cursor: "pointer",
+                  cursor: isClaiming ? "wait" : "pointer",
+                  opacity: isClaiming ? 0.7 : 1,
                   boxShadow: "0 1px 2px rgba(0, 0, 0, 0.04)",
                   transition: "all 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
+                  if (!isClaiming) e.currentTarget.style.background = "var(--surface-hover, rgba(0, 0, 0, 0.09))";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
+                  if (!isClaiming) e.currentTarget.style.background = "var(--bg-secondary, rgba(0, 0, 0, 0.05))";
                 }}
               >
-                <RefreshCw size={11} />
-                <span>Switch Network</span>
+                <RefreshCw size={11} className={isClaiming ? "animate-spin" : ""} />
+                <span>{isClaiming ? "Switching..." : "Switch Network"}</span>
               </button>
             )}
 
@@ -674,6 +695,8 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
     </div>
   );
 
+  const isUserSelfMint = summary?.manualClaim || (error && (error.includes("Self-mint") || error.includes("destination wallet")));
+
   const headerTitle = isAlreadyCompleted
     ? "Already Claimed"
     : isSuccess
@@ -683,7 +706,9 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
       : isAttestationPending
         ? "Attestation in Progress"
         : isClaimManualRequired
-          ? "Manual Claim Required"
+          ? isUserSelfMint
+            ? "Self-Mint Ready"
+            : "Manual Claim Required"
           : isMintRejected
             ? "Mint Cancelled in Wallet"
             : isPending
@@ -703,7 +728,9 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
     : isAttestationPending
       ? "Circle Iris attesting on-chain..."
       : isClaimManualRequired
-        ? "Automated mint delayed. Funds safe."
+        ? isUserSelfMint
+          ? "Attestation verified · Ready to claim"
+          : "Automated mint delayed. Funds safe."
         : isMintRejected
           ? "Funds safe, claimable anytime."
           : isRunning
@@ -1172,9 +1199,19 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
               </div>
             )}
             {/* ── Manual Claim Required Notice ───────────────────────────── */}
-            {isClaimManualRequired && (
-              <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
-                {error && (
+            {(() => {
+              const isMintingActive = isRunning && (activeM?.id === "mint" || activeM?.id === "claim");
+              const showClaimNotice = isClaimManualRequired || isMintingActive;
+              if (!showClaimNotice) return null;
+
+              const displayNoticeText = isMintingActive
+                ? "Self-mint in progress. Please confirm the mint transaction in your destination wallet."
+                : (isUserSelfMint && error && error.toLowerCase().includes("backend gas is low")
+                  ? "Self-mint enabled. Please confirm the mint transaction in your destination wallet."
+                  : error || "Self-mint enabled. Please confirm the mint transaction in your destination wallet.");
+
+              return (
+                <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>
                   <div
                     style={{
                       padding: "10px 14px",
@@ -1191,7 +1228,7 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                         Claim Notice
                       </span>
                       <button
-                        onClick={() => navigator.clipboard.writeText(error)}
+                        onClick={() => navigator.clipboard.writeText(displayNoticeText)}
                         title="Copy details"
                         style={{
                           background: "transparent",
@@ -1207,34 +1244,34 @@ export const TxTracker = forwardRef<TxTrackerRef, TxTrackerProps>((
                       </button>
                     </div>
                     <p style={{ margin: 0, fontSize: 12, fontWeight: 500, color: "var(--text-primary)", lineHeight: 1.45 }}>
-                      {error}
+                      {displayNoticeText}
                     </p>
                   </div>
-                )}
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, flexWrap: "nowrap", width: "100%", marginTop: 6 }}>
-                  <button
-                    onClick={onViewHistory || handleDismiss}
-                    style={{
-                      background: "transparent",
-                      border: "none",
-                      padding: "2px 0",
-                      fontSize: 12.5,
-                      fontWeight: 500,
-                      color: "var(--text-muted)",
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 4,
-                      textDecoration: "underline",
-                      textUnderlineOffset: "3px",
-                    }}
-                  >
-                    View in History
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 18, flexWrap: "nowrap", width: "100%", marginTop: 6 }}>
+                    <button
+                      onClick={onViewHistory || handleDismiss}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        padding: "2px 0",
+                        fontSize: 12.5,
+                        fontWeight: 500,
+                        color: "var(--text-muted)",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        textDecoration: "underline",
+                        textUnderlineOffset: "3px",
+                      }}
+                    >
+                      View in History
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             {/* ── Mint Rejected Notice ───────────────────────────────────── */}
             {isMintRejected && (
               <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 10 }}>

@@ -144,6 +144,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: 'Sui transaction did not succeed' }, { status: 400 });
         }
       } else if (isSolanaSignature) {
+        const isSolanaMainnet = source_chain.includes("Mainnet");
         let dataResult = null;
         for (let attempt = 0; attempt < 5; attempt++) {
           try {
@@ -172,7 +173,7 @@ export async function POST(req: Request) {
                 throw new Error(resultData.error.message || 'RPC returned an error');
               }
               return resultData;
-            }, "Bridge Sync Verification");
+            }, "Bridge Sync Verification", isSolanaMainnet);
 
             if (data && data.result) {
               dataResult = data.result;
@@ -184,7 +185,7 @@ export async function POST(req: Request) {
 
           if (attempt < 4) {
             const delay = (attempt + 1) * 800;
-            console.log(`[BridgeSync] Transaction not yet indexed on Solana Devnet. Retrying in ${delay}ms...`);
+            console.log(`[BridgeSync] Transaction not yet indexed on ${source_chain}. Retrying in ${delay}ms...`);
             await new Promise(r => setTimeout(r, delay));
           }
         }
